@@ -19,22 +19,12 @@ from causallearn.utils.PCUtils.BackgroundKnowledgeOrientUtils import \
 from causallearn.utils.GraphUtils import GraphUtils
 
 import numpy as np
-import datetime
-import time
 
 from causallearn.search.ConstraintBased.PC import pc
 from causallearn.search.ConstraintBased.FCI import fci
 from causallearn.utils.cit import chisq, fisherz, gsq, kci, mv_fisherz, d_separation
 from causallearn.search.FCMBased import lingam
 from causallearn.search.FCMBased.lingam.utils import make_dot
-
-from createBackground import get_CG_and_background
-from TrainRideNode import TrainRideNode
-from ETL_data import getDataSetWith_TRN, class_dataset_to_delay_columns_pair
-
-# clean data
-import pandas as pd
-
 
 """### Compare two SCM's"""
 
@@ -124,34 +114,3 @@ def createCGWithDirectLiNGAM(data, filename, column_names_par = None, bk = None)
   # visualize
   dot_graph = make_dot(model.adjacency_matrix_, labels=column_names)
   dot_graph.render(filename=filename)
-
-
-print("extracting file")
-export_name = 'Data/6100_jan_nov_2022.csv'
-dataset_with_classes = getDataSetWith_TRN(export_name)
-print("extracting file done")
-
-print("translating dataset to 2d array for algo")
-smaller_dataset = np.concatenate((dataset_with_classes[:,:40], dataset_with_classes[:,300:340]), axis=1)
-delays_to_feed_to_algo, column_names = class_dataset_to_delay_columns_pair(smaller_dataset)
-print("Creating background knowledge")
-start = time.time()
-bk, cg_sched = get_CG_and_background(smaller_dataset, 'Results/sched.png')
-end = time.time()
-print("creating schedule took", end - start, "seconds")
-# pdy = GraphUtils.to_pydot(cg_sched.G, labels=column_names )
-# pdy.write_png("sched.png")
-print("start with FCI and background")
-start = time.time()
-createCGWithDirectLiNGAM(delays_to_feed_to_algo, 'Results/6100_jan_nov_with_backg.png', column_names, bk)
-end = time.time()
-print()
-print("creating SCM with background is done, it took" , end - start, "seconds")
-print("start with FCI without background")
-start = time.time()
-createCGWithDirectLiNGAM(delays_to_feed_to_algo, 'Results/6100_jan_nov_wo_backgr.png', column_names)
-end = time.time()
-print("creating SCM without background is done, it took" , end - start, "seconds")
-
-#for i,j in (compareSCM(fci_cg, fci_cg_none)):
-  #print(i, "   \t", j)

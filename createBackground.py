@@ -85,7 +85,7 @@ def createStationDict(train_serie_day: np.array):
 
 def addRequiredBasedOnStation(train_serie_day: np.array, bk: BackgroundKnowledge, mapper_dict: dict,
                               station_dict: dict) -> BackgroundKnowledge:
-    buffer = 60  # minutes
+    buffer = 30  # minutes
     # for each station, sort the list on arrival time and if the arrival time is within the buffer time, add a dependency
     for station_list in station_dict.values():
         station_list.sort(key=lambda x: x[0])
@@ -101,7 +101,7 @@ def addRequiredBasedOnStation(train_serie_day: np.array, bk: BackgroundKnowledge
 
 
 def addForbiddenStationTimeWise(time_trn, trn, same_station_list, bk, mapper_dict):
-    buffer = 60  # minutes
+    buffer = 30  # minutes
     for (same_time_trn, same_trn) in same_station_list:
         if same_trn.getID() == trn.getID():
             return bk

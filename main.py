@@ -1,19 +1,37 @@
-# import os
-# os.environ["PATH"] += os.pathsep + "C:\Program Files\Graphviz\bin"
+import numpy as np
+import datetime
+import time
 
-import pydot
+from createscm import createCGWithPC, createCGWithFCI, createCGWithDirectLiNGAM
+from ETL_data import getDataSetWith_TRN, class_dataset_to_delay_columns_pair
+from createBackground import get_CG_and_background
 
-graph = pydot.Dot(graph_type='digraph')
-node_a = pydot.Node("Node A", style="filled", fillcolor="red")
-node_b = pydot.Node("Node B", style="filled", fillcolor="green")
-node_c = pydot.Node("Node C", style="filled", fillcolor="#0000ff")
-node_d = pydot.Node("Node D", style="filled", fillcolor="#976856")
-graph.add_node(node_a)
-graph.add_node(node_b)
-graph.add_node(node_c)
-graph.add_node(node_d)
-graph.add_edge(pydot.Edge(node_a, node_b))
-graph.add_edge(pydot.Edge(node_b, node_c))
-graph.add_edge(pydot.Edge(node_c, node_d))
-graph.add_edge(pydot.Edge(node_d, node_a, label="and back we go again", labelfontcolor="#009933", fontsize="10.0", color="blue"))
-graph.write_png('example2_graph.png')
+print("extracting file")
+export_name =  'Data/6100_jan_nov_2022.csv' #'Data/2019-03-01_2019-05-31.csv'
+dataset_with_classes = getDataSetWith_TRN(export_name)
+print("extracting file done")
+
+print("translating dataset to 2d array for algo")
+smaller_dataset = dataset_with_classes[:40] #np.concatenate((dataset_with_classes[:,:100], dataset_with_classes[:,300:400]), axis=1)
+delays_to_feed_to_algo, column_names = class_dataset_to_delay_columns_pair(smaller_dataset)
+print("Creating background knowledge")
+start = time.time()
+bk, cg_sched = get_CG_and_background(smaller_dataset, 'Results/sched.png')
+end = time.time()
+print("creating schedule took", end - start, "seconds")
+# pdy = GraphUtils.to_pydot(cg_sched.G, labels=column_names )
+# pdy.write_png("sched.png")
+print("start with FCI and background")
+start = time.time()
+createCGWithFCI(delays_to_feed_to_algo, 'Results/6100_jan_nov_with_backg.png', column_names, bk)
+end = time.time()
+print()
+print("creating SCM with background is done, it took" , end - start, "seconds")
+print("start with FCI without background")
+start = time.time()
+createCGWithFCI(delays_to_feed_to_algo, 'Results/6100_jan_nov_wo_backgr.png', column_names)
+end = time.time()
+print("creating SCM without background is done, it took" , end - start, "seconds")
+
+#for i,j in (compareSCM(fci_cg, fci_cg_none)):
+  #print(i, "   \t", j)

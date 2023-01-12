@@ -3,3 +3,5 @@
 /Data
 .idea
 /__pycache__
+*.pub
+new_ssh
