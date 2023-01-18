@@ -95,7 +95,9 @@ def addRequiredBasedOnStation(train_serie_day: np.array, bk: BackgroundKnowledge
                 prev = (time_trn, trn)
                 continue
             if ((time_trn.hour - prev[0].hour) * 60 + (time_trn.minute - prev[0].minute)) <= buffer:
-                bk = addDependency(prev[1].getID(), trn.getID(), bk, mapper_dict)
+                # TODO: how about platforms A and B?
+                if trn.getPlatform() == prev[1].getPlatform():
+                    bk = addDependency(prev[1].getID(), trn.getID(), bk, mapper_dict)
             prev = (time_trn, trn)
     return bk
 

@@ -35,3 +35,6 @@ class TrainRideNode:
 
     def getID(self):
         return f'{self.trainRideNumber}_{self.stationName}_{self.activity}_{self.getPlannedTimeStr()}'
+
+    def getPlatform(self):
+        return self.platformNumber
