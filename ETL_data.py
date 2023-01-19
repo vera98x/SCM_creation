@@ -33,7 +33,7 @@ def retrieveDataframe(export_name, workdays = None):
     df["basic|drp_act"] = df["basic|drp_act"].replace('V', 'K_V')
     df["basic|drp_act"] = df["basic|drp_act"].replace('A', 'K_A')
 
-    df['drp_with_act'] = df['basic|treinnr'] + "_" + df['basic|drp'] + '_' + df['basic|drp_act']
+    #df['drp_with_act'] = df['basic|treinnr'] + "_" + df['basic|drp'] + '_' + df['basic|drp_act']
 
     df['plan|time'] = pd.to_datetime(df['basic|plan']).dt.time
     df['uitvoer|time'] = pd.to_datetime(df['basic|uitvoer']).dt.time
