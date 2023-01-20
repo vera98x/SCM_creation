@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import datetime
 
@@ -20,7 +21,6 @@ def changeToD(df_complete):
     df_res = df_res.sort_values(by=['date', 'basic_treinnr_treinserie', "basic|treinnr", "basic|plan"])
 
     df_res = df_res.reset_index(drop=True)
-
     return df_res
 
 def makeDataUniform(df):
@@ -65,31 +65,42 @@ def makeDataUniform(df):
 
     return df_new
 
+def retrieveDataframeNew(export_name):
+    # split dataframes in column
+    #export_name = 'Data/6100_jan_nov_2022.csv'
+    df = pd.read_csv(export_name, sep=";")
+    df = df[
+        ['basic_treinnr_treinserie','basic|treinnr', 'basic|spoor', 'basic|drp', 'basic|drp_act', 'basic|plan', 'basic|uitvoer']]
+    df['basic_treinnr_treinserie'] = df['basic_treinnr_treinserie'].astype('string')
+    df['basic|drp'] = df['basic|drp'].astype('string')
+    #df['basic|spoor'] = df['basic|spoor'].astype('string')
+    df['basic|treinnr'] = df['basic|treinnr'].astype('string')
+    df['basic|drp_act'] = df['basic|drp_act'].astype('string')
+    df['basic|plan'] = pd.to_datetime(df['basic|plan'], format='%d-%m-%Y %H:%M')
+    df['basic|uitvoer'] = pd.to_datetime(df['basic|uitvoer'], format='%d-%m-%Y %H:%M')
 
-# split dataframes in column
-export_name = 'Data/6100_jan_nov_2022.csv'
-df = pd.read_csv(export_name, sep=";")
-df = df[
-    ['basic_treinnr_treinserie','basic|treinnr', 'basic|drp', 'basic|drp_act', 'basic|plan', 'basic|uitvoer']]
-df['basic|plan'] = pd.to_datetime(df['basic|plan'], format='%d-%m-%Y %H:%M')
-df['basic|uitvoer'] = pd.to_datetime(df['basic|uitvoer'], format='%d-%m-%Y %H:%M')
-df['basic|uitvoer'] = df['basic|uitvoer'].fillna(df['basic|plan'])
-df['date'] = pd.to_datetime(df['basic|plan']).dt.date
+    df['basic|uitvoer'] = df['basic|uitvoer'].fillna(df['basic|plan'])
+    df['date'] = pd.to_datetime(df['basic|plan']).dt.date
+
+    df = changeToD(df)
+    pd.set_option('display.max_columns', 5)
+
+    #group per trainserie
+    gb = df.groupby(['basic_treinnr_treinserie'])
+    trainserieList = [gb.get_group(x) for x in gb.groups]
+    for trainserie_index in range(len(trainserieList)):
+        trainserie = trainserieList[trainserie_index]
+        trainserieList[trainserie_index] = makeDataUniform(trainserie)
+    df = pd.concat(trainserieList)
+    df = df.sort_values(by=['date', 'basic_treinnr_treinserie', "basic|treinnr", "basic|plan"])
+    df = df.reset_index(drop=True)
 
 
-df = changeToD(df)
-pd.set_option('display.max_columns', 5)
-df = makeDataUniform(df)
+    df['plan|time'] = pd.to_datetime(df['basic|plan']).dt.time
+    df['uitvoer|time'] = pd.to_datetime(df['basic|uitvoer']).dt.time
 
-df['basic|drp'] = df['basic|drp'].astype('string')
-df['basic|treinnr'] = df['basic|treinnr'].astype('string')
-df['basic|drp_act'] = df['basic|drp_act'].astype('string')
-
-df['plan|time'] = pd.to_datetime(df['basic|plan']).dt.time
-df['uitvoer|time'] = pd.to_datetime(df['basic|uitvoer']).dt.time
-
-df['delay'] = df['basic|uitvoer'] - df['basic|plan']
-df['delay'] = df['delay'].map(lambda x: x.total_seconds())
-
-print(df)
+    df['delay'] = df['basic|uitvoer'] - df['basic|plan']
+    df['delay'] = df['delay'].map(lambda x: x.total_seconds())
+    #df['basic|spoor'].fillna(np.nan, inplace=True)
+    return df[['date', 'basic_treinnr_treinserie','basic|treinnr', 'basic|spoor', 'basic|drp', 'basic|drp_act','plan|time','uitvoer|time', 'delay']]
 

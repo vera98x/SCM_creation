@@ -5,7 +5,7 @@ from collections import Counter
 import numpy as np
 from TrainRideNode import TrainRideNode
 
-from ETL_data import keepWeekendDays, keepWorkDays
+from ETL_data_stations import keepWeekendDays, keepWorkDays
 def createTestSample():
     d = {'basic|uitvoer': ["1-3-2019 05:26:01", "1-3-2019 05:27:00", "1-3-2019 05:36:00","1-3-2019  05:37:00"],
          'delay': [0,1,2,1],

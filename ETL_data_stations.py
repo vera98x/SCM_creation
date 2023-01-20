@@ -4,6 +4,7 @@ import numpy as np
 from TrainRideNode import TrainRideNode
 from StationNode import StationNode
 from typing import List
+from test6100 import retrieveDataframeNew
 
 # The values in the CSV file differ sometimes to here are global vlaues
 basic_treinnr = 'basic_treinnr' #'basic|treinnr'
@@ -59,7 +60,8 @@ def keepActivity(df_input, act_val : List[str]):
     df_input = df_input.loc[df_input['basic|drp_act'].isin(act_val)]
     return df_input
 def keepTrainseries(df_input, act_val : List[str]):
-    df_input = df_input.loc[df_input['basic_treinnr_treinserie'].isin(act_val)]
+    df_input = df_input[df_input['basic_treinnr_treinserie'].isin(act_val)]
+
     return df_input
 def keepWorkDays(df_input):
     df_input['daynumber'] = df_input['date'].apply(lambda x: int(x.strftime("%u")))
@@ -120,13 +122,23 @@ def dfToTrainRides(df):
                                  trainride['basic|drp_act'], trainride['delay'], trainride['plan|time'])
             dataset_day = np.append(dataset_day, node)
         dataset_with_classes = np.r_[dataset_with_classes, [dataset_day]]
-def getDataSetWith_TRN(export_name, weekdays, list_of_trainseries):
-    df = retrieveDataframe(export_name, weekdays)
-    df = keepTrainseries(df, list_of_trainseries)
+    return dataset_with_classes
 
+def getDataSetWith_TRN(export_name, workdays, list_of_trainseries):
+    df = retrieveDataframeNew('Data/6100_jan_nov_2022.csv')
+    print(len(df))
+    df = keepTrainseries(df, list_of_trainseries)
+    print(len(df))
+    if workdays == None:
+        pass
+    elif workdays:
+        df = keepWorkDays(df)
+    elif not workdays:
+        df = keepWeekendDays(df)
+    print(len(df))
     # group on stations
     gb = df.groupby(['basic|drp'])
-    print("Amount of days:", len(gb.groups))
+    print("Amount of Stations:", len(gb.groups))
     grouped_by_station = [gb.get_group(x) for x in gb.groups]
     print(len(grouped_by_station))
 

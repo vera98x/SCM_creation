@@ -1,6 +1,6 @@
 from TrainRideNode import TrainRideNode
 from createBackground import get_CG_and_background, createStationDict, addForbiddenBasedOnStation, variableNamesToNumber, addRequiredBasedOnStation,addRequiredBasedTrainSerie
-from ETL_data import getDataSetWith_TRN, class_dataset_to_delay_columns_pair
+from ETL_data_stations import getDataSetWith_TRN, class_dataset_to_delay_columns_pair
 from causallearn.utils.PCUtils.BackgroundKnowledge import BackgroundKnowledge
 from causallearn.graph.GraphNode import GraphNode
 from causallearn.graph.GeneralGraph import GeneralGraph
