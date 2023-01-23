@@ -5,6 +5,7 @@ import time
 from createscm import createCGWithPC, createCGWithFCI, createCGWithDirectLiNGAM
 from ETL_data_day import getDataSetWith_TRN, class_dataset_to_delay_columns_pair
 from createBackground import get_CG_and_background
+from createSuperGraph import get_CG_and_superGraph
 
 
 print("extracting file")
@@ -14,24 +15,25 @@ dataset_with_classes = getDataSetWith_TRN(export_name, True, list_of_trainseries
 print("extracting file done")
 print(dataset_with_classes)
 print("translating dataset to 2d array for algo")
-smaller_dataset = dataset_with_classes[:,80:] #np.concatenate((dataset_with_classes[:,:100], dataset_with_classes[:,300:400]), axis=1)
+smaller_dataset = dataset_with_classes[:,:80] #np.concatenate((dataset_with_classes[:,:100], dataset_with_classes[:,300:400]), axis=1)
 delays_to_feed_to_algo, column_names = class_dataset_to_delay_columns_pair(smaller_dataset)
 print("Creating background knowledge")
 start = time.time()
-bk, cg_sched = get_CG_and_background(smaller_dataset, 'Results/sched.png')
+bk, cg_sched = get_CG_and_superGraph(smaller_dataset, 'Results/sched.png') #get_CG_and_background(smaller_dataset, 'Results/sched.png')
 end = time.time()
 print("creating schedule took", end - start, "seconds")
 # pdy = GraphUtils.to_pydot(cg_sched.G, labels=column_names )
 # pdy.write_png("sched.png")
+method = 'mv_fisherz' #'fisherz'
 print("start with FCI and background")
 start = time.time()
-createCGWithFCI(delays_to_feed_to_algo, 'Results/6100_jan_nov_with_backg.png', column_names, bk)
+createCGWithFCI(method, delays_to_feed_to_algo, 'Results/6100_jan_nov_with_backg.png', column_names, bk)
 end = time.time()
 print()
 print("creating SCM with background is done, it took" , end - start, "seconds")
 print("start with FCI without background")
 start = time.time()
-createCGWithFCI(delays_to_feed_to_algo, 'Results/6100_jan_nov_wo_backgr.png', column_names)
+createCGWithFCI(method, delays_to_feed_to_algo, 'Results/6100_jan_nov_wo_backgr.png', column_names)
 end = time.time()
 print("creating SCM without background is done, it took" , end - start, "seconds")
 

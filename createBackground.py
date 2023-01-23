@@ -13,8 +13,9 @@ def addDependency(node1_name: str, node2_name: str, bk: BackgroundKnowledge, map
     node2 = GraphNode(mapper_dict[node2_name])
 
     bk = removeForbiddenDependency(node1_name, node2_name, bk, mapper_dict)
-    bk = removeForbiddenDependency(node2_name, node1_name, bk, mapper_dict)
+    #bk = removeForbiddenDependency(node2_name, node1_name, bk, mapper_dict)
     bk = bk.add_required_by_node(node1, node2)
+    bk = bk.add_forbidden_by_node(node2, node1)
 
     return bk
 
@@ -71,7 +72,7 @@ def addRequiredBasedTrainSerie(train_serie_day: np.array, bk: BackgroundKnowledg
 
 
 def createStationDict(train_serie_day: np.array):
-    station_dict = {}  # example: bkl: [(8, TrainRideNode1), (13, TrainRideNode2)]
+    station_dict = {}  # example: bkl: [(8:15, TrainRideNode1), (13:05, TrainRideNode2)]
 
     # for each station, list all the trains that arrive there with its arrival time and TrainRideNode
     for trn in train_serie_day:
@@ -89,9 +90,9 @@ def addRequiredBasedOnStation(train_serie_day: np.array, bk: BackgroundKnowledge
     # for each station, sort the list on arrival time and if the arrival time is within the buffer time, add a dependency
     for station_list in station_dict.values():
         station_list.sort(key=lambda x: x[0])
-        prev = ""
+        prev = None
         for (time_trn, trn) in station_list:
-            if prev == "":
+            if prev == None:
                 prev = (time_trn, trn)
                 continue
             if ((time_trn.hour - prev[0].hour) * 60 + (time_trn.minute - prev[0].minute)) <= buffer:

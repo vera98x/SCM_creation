@@ -67,8 +67,8 @@ def createCGWithPC(data, filename, column_names, bk = None):
   pdy.write_png(filename)
   return cg_pc
 
-def createCGWithFCI(data, filename, column_names = None, bk = None):
-  ggFCI, edges = fci(data, background_knowledge = bk)
+def createCGWithFCI(method, data, filename, column_names = None, bk = None):
+  ggFCI, edges = fci(data,independence_test_method = method, background_knowledge = bk)
   col_range = len(data[0])
   #nodes = [GraphNode(i) for i in column_names]
   cgFCI = CausalGraph(col_range, column_names)

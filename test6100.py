@@ -50,13 +50,18 @@ def makeDataUniform(df):
             # add missing values
             add_extra_activities = diff[(diff["date"] == example_date)]
             add_extra_activities['date'] = day_date
+            add_extra_activities['sorting_time'] = add_extra_activities['basic|plan']
+            add_extra_activities['basic|uitvoer'] = np.nan
+            add_extra_activities['basic|plan'] = np.nan
 
             # TODO: when creating the dataset, remove the basic plan and basic uitvoer
             #add_extra_activities['basic|plan'].apply(lambda dt: datetime.datetime.combine(day_date, dt.time()))
             #add_extra_activities['basic|uitvoer'].apply(lambda dt: datetime.datetime.combine(day_date, dt.time()))
-
+            df_res['sorting_time'] = df_res['basic|plan']
             df_res = pd.concat([df_res, add_extra_activities])
-            df_res = df_res.sort_values(by=['date', 'basic_treinnr_treinserie', "basic|treinnr", "basic|plan"])
+            df_res = df_res.sort_values(by=['date', 'basic_treinnr_treinserie', "basic|treinnr", "sorting_time"])
+            # remove the sorting column
+            df_res = df_res.drop(columns=['sorting_time'])
             df_res = df_res.reset_index(drop=True)
 
             grouped_by_date[day_index] = df_res
