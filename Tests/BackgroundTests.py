@@ -1,12 +1,14 @@
 from TrainRideNode import TrainRideNode
 from createBackground import get_CG_and_background, createStationDict, addForbiddenBasedOnStation, variableNamesToNumber, addRequiredBasedOnStation,addRequiredBasedTrainSerie
 from ETL_data_stations import getDataSetWith_TRN, class_dataset_to_delay_columns_pair
+from createscm import createCGWithFCI
 from causallearn.utils.PCUtils.BackgroundKnowledge import BackgroundKnowledge
 from causallearn.graph.GraphNode import GraphNode
 from causallearn.graph.GeneralGraph import GeneralGraph
 from causallearn.graph.GraphClass import CausalGraph
 import datetime
 import numpy as np
+import time
 from causallearn.utils.GraphUtils import GraphUtils
 
 # TrainRideNode(trainride['basic|treinnr'], trainride['basic|drp'], trainride['basic|spoor'],trainride['basic|drp_act'], trainride['delay'], trainride['plan|time'])
@@ -75,9 +77,24 @@ bk = addForbiddenBasedOnStation([], bk, mapper_dict, station_dict)
 bk = addRequiredBasedOnStation([], bk, mapper_dict, station_dict)
 bk = addRequiredBasedTrainSerie(day, bk, mapper_dict)
 bk = addForbiddenBasedOnStation([], bk, mapper_dict, station_dict)
+print(bk.required_rules_specs)
+print(bk.forbidden_rules_specs)
 
-req_cg = backgroundToGraphRequired(bk, column_names, mapper_dict)
-GraphUtils.to_pydot(req_cg.G, labels=column_names).write_png("req.png")
-forb_cg = backgroundToGraphForbidden(bk, column_names, mapper_dict)
-GraphUtils.to_pydot(forb_cg.G, labels=column_names).write_png("forb.png")
+bk.forbidden_rules_to_dict()
+bk.required_rules_to_dict()
+
+print()
+
+node1 = GraphNode("X1")
+node2 = GraphNode("X4")
+
+print(bk.is_forbidden(node1, node2))
+print(bk.is_required(node1, node2))
+
+
+
+# req_cg = backgroundToGraphRequired(bk, column_names, mapper_dict)
+# GraphUtils.to_pydot(req_cg.G, labels=column_names).write_png("req.png")
+# forb_cg = backgroundToGraphForbidden(bk, column_names, mapper_dict)
+# GraphUtils.to_pydot(forb_cg.G, labels=column_names).write_png("forb.png")
 

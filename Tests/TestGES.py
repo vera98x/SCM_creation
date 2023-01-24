@@ -2,6 +2,7 @@ from typing import Optional
 from causallearn.score.LocalScoreFunctionClass import LocalScoreClass
 from causallearn.graph.GeneralGraph import GeneralGraph
 from causallearn.utils.DAG2CPDAG import dag2cpdag
+from causallearn.utils.TXT2GeneralGraph import txt2generalgraph
 from causallearn.utils.GESUtils import *
 from causallearn.utils.PDAG2DAG import pdag2dag
 from causallearn.utils.GraphUtils import GraphUtils
@@ -12,14 +13,10 @@ import time
 
 from ETL_data_day import getDataSetWith_TRN, class_dataset_to_delay_columns_pair
 from createSuperGraph import get_CG_and_superGraph
-
-
-# the goal of the ScoreBasedMethod is to first implement the supergraph using domain knowledge and then adding the backward part of the greedy search to optimize this score.
-
 def completeGES(data, filename, score_func: str = 'local_score_BIC'):
     r = ges(data, score_func)
     # visualization using pydot #
-    pdy = GraphUtils.to_pydot(r['G'], labels=column_names)
+    pdy = GraphUtils.to_pydot(r['G'])
     pdy.write_png(filename)
 
 def backwardGES(X: ndarray, supergraph: GeneralGraph, score_func: str = 'local_score_BIC',
@@ -120,34 +117,37 @@ def backwardGES(X: ndarray, supergraph: GeneralGraph, score_func: str = 'local_s
     Record = {'update1': update1, 'update2': update2, 'G_step1': G_step1, 'G_step2': G_step2, 'G': G, 'score': score}
     return Record
 
+print('Now start test_ges_load_linear_10_with_local_score_BIC ...')
+data_path = "data_linear_10.txt"
+truth_graph_path = "graph_10.txt"
+data = np.loadtxt(data_path, skiprows=1)
+truth_dag = txt2generalgraph(truth_graph_path)  # truth_dag is a GeneralGraph instance
+print(type(truth_dag))
+#truth_cpdag = dag2cpdag(truth_dag)
+#num_edges_in_truth = truth_dag.get_num_edges()
 
-print("extracting file")
-export_name = 'Data/6100_jan_nov_2022_2.csv' #'Data/2019-03-01_2019-05-31.csv'
-list_of_trainseries = ['6100']
-dataset_with_classes = getDataSetWith_TRN(export_name, True, list_of_trainseries)
-print("extracting file done")
-print(dataset_with_classes)
-print("translating dataset to 2d array for algo")
-smaller_dataset = dataset_with_classes[:,:] #np.concatenate((dataset_with_classes[:,:100], dataset_with_classes[:,300:400]), axis=1)
-delays_to_feed_to_algo, column_names = class_dataset_to_delay_columns_pair(smaller_dataset)
-print("Creating background knowledge")
+# Run GES with default parameters: score_func='local_score_BIC', maxP=None, parameters=None
+#res_map = ges(data, score_func='local_score_marginal_general', maxP=None, parameters=None)  # Run GES and obtain the estimated graph (res_map is Dict object，which contains the updated steps, the result causal graph and the result score.)
+#print(res_map['score'])
+
 start = time.time()
-bk, cg_sched = get_CG_and_superGraph(smaller_dataset, 'Results/sched.png') #get_CG_and_background(smaller_dataset, 'Results/sched.png')
+r = backwardGES(data, truth_dag)
 end = time.time()
-print("creating schedule took", end - start, "seconds")
-method = 'mv_fisherz' #'fisherz'
-print("start with GES and background")
-#completeGES(delays_to_feed_to_algo, 'Results/6100_jan_nov_wo_backgr.png', 'local_score_BIC')
-start = time.time()
-r = backwardGES(delays_to_feed_to_algo, cg_sched.G)
-end = time.time()
-print("score:", r['score'])
 print()
-print("creating SCM with background is done, it took" , end - start, "seconds")
-pdy = GraphUtils.to_pydot(r['G'], labels=column_names)
-pdy.write_png('Results/6100_jan_nov_with_backg.png')
-# print("starting normal GES")
+print("creating GES backward is done, it took" , end - start, "seconds")
+print("score:", r['score'])
+
+# print("extracting file")
+# export_name = '../Data/6100_jan_nov_2022_2.csv' #'Data/2019-03-01_2019-05-31.csv'
+# list_of_trainseries = ['6100']
+# dataset_with_classes = getDataSetWith_TRN(export_name, True, list_of_trainseries)
+# print("extracting file done")
+#
+# print("translating dataset to 2d array for algo")
+# smaller_dataset = dataset_with_classes[:,:20] #np.concatenate((dataset_with_classes[:,:100], dataset_with_classes[:,300:400]), axis=1)
+# delays_to_feed_to_algo, column_names = class_dataset_to_delay_columns_pair(smaller_dataset)
+# print("Creating background knowledge")
 # start = time.time()
-# completeGES(delays_to_feed_to_algo, 'Results/6100_jan_nov_wo_backgr.png')
+# bk, cg_sched = get_CG_and_superGraph(smaller_dataset, '../Results/sched.png') #get_CG_and_background(smaller_dataset, 'Results/sched.png')
 # end = time.time()
-# print("creating SCM without background is done, it took" , end - start, "seconds")
+# backwardGES(delays_to_feed_to_algo, cg_sched.G)

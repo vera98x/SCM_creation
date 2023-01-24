@@ -25,6 +25,7 @@ from causallearn.search.ConstraintBased.FCI import fci
 from causallearn.utils.cit import chisq, fisherz, gsq, kci, mv_fisherz, d_separation
 from causallearn.search.FCMBased import lingam
 from causallearn.search.FCMBased.lingam.utils import make_dot
+import time
 
 """### Compare two SCM's"""
 
@@ -68,7 +69,14 @@ def createCGWithPC(data, filename, column_names, bk = None):
   return cg_pc
 
 def createCGWithFCI(method, data, filename, column_names = None, bk = None):
+  with_or_without = "with" if bk != None else "without"
+  print("start with FCI "+ with_or_without +" background")
+  start = time.time()
   ggFCI, edges = fci(data,independence_test_method = method, background_knowledge = bk)
+  end = time.time()
+  print()
+
+  print("creating SCM "+ with_or_without+" background is done, it took", end - start, "seconds")
   col_range = len(data[0])
   #nodes = [GraphNode(i) for i in column_names]
   cgFCI = CausalGraph(col_range, column_names)

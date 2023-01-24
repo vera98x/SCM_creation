@@ -51,8 +51,8 @@ def makeDataUniform(df):
             add_extra_activities = diff[(diff["date"] == example_date)]
             add_extra_activities['date'] = day_date
             add_extra_activities['sorting_time'] = add_extra_activities['basic|plan']
-            add_extra_activities['basic|uitvoer'] = np.nan
-            add_extra_activities['basic|plan'] = np.nan
+            #add_extra_activities['basic|uitvoer'] = np.nan
+            #add_extra_activities['basic|plan'] = np.nan
 
             # TODO: when creating the dataset, remove the basic plan and basic uitvoer
             #add_extra_activities['basic|plan'].apply(lambda dt: datetime.datetime.combine(day_date, dt.time()))
