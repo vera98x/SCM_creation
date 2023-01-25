@@ -6,8 +6,13 @@ from causallearn.graph.GeneralGraph import GeneralGraph
 from causallearn.graph.GraphClass import CausalGraph
 import numpy as np
 
+from typing import Dict, Tuple, List
+from TrainRideNode import TrainRideNode
+from FastBackgroundKnowledge import FastBackgroundKnowledge
+import datetime
 
-def addDependency(node1_name: str, node2_name: str, bk: BackgroundKnowledge, mapper_dict: dict) -> BackgroundKnowledge:
+
+def addDependency(node1_name: str, node2_name: str, bk: BackgroundKnowledge, mapper_dict: Dict[str,str]) -> BackgroundKnowledge:
     # add directed edge between the two nodes, node1 --> node2
     node1 = GraphNode(mapper_dict[node1_name])
     node2 = GraphNode(mapper_dict[node2_name])
@@ -21,7 +26,7 @@ def addDependency(node1_name: str, node2_name: str, bk: BackgroundKnowledge, map
 
 
 def removeDependency(node1_name: str, node2_name: str, bk: BackgroundKnowledge,
-                     mapper_dict: dict) -> BackgroundKnowledge:
+                     mapper_dict: Dict[str,str]) -> BackgroundKnowledge:
     # remove directed edge between the two nodes, node1 --> node2
     node1 = GraphNode(mapper_dict[node1_name])
     node2 = GraphNode(mapper_dict[node2_name])
@@ -30,7 +35,7 @@ def removeDependency(node1_name: str, node2_name: str, bk: BackgroundKnowledge,
 
 
 def addForbiddenDependency(node1_name: str, node2_name: str, bk: BackgroundKnowledge,
-                           mapper_dict: dict) -> BackgroundKnowledge:
+                           mapper_dict: Dict[str,str]) -> BackgroundKnowledge:
     # add forbidden edge between the two nodes, node1 --> node2
     node1 = GraphNode(mapper_dict[node1_name])
     node2 = GraphNode(mapper_dict[node2_name])
@@ -44,7 +49,7 @@ def addForbiddenDependency(node1_name: str, node2_name: str, bk: BackgroundKnowl
 
 
 def removeForbiddenDependency(node1_name: str, node2_name: str, bk: BackgroundKnowledge,
-                              mapper_dict: dict) -> BackgroundKnowledge:
+                              mapper_dict: Dict[str,str]) -> BackgroundKnowledge:
     node1 = GraphNode(mapper_dict[node1_name])
     node2 = GraphNode(mapper_dict[node2_name])
     bk = bk.remove_forbidden_by_node(node1, node2)
@@ -52,7 +57,7 @@ def removeForbiddenDependency(node1_name: str, node2_name: str, bk: BackgroundKn
 
 
 def addRequiredBasedTrainSerie(train_serie_day: np.array, bk: BackgroundKnowledge,
-                               mapper_dict: dict) -> BackgroundKnowledge:
+                               mapper_dict: Dict[str,str]) -> BackgroundKnowledge:
     # trainseries contains a 1D array containing TreinRideNode data of one day
     # for each train ride and every stop/station, add a chain of dependencies
     # s1->s2->s3
@@ -71,7 +76,8 @@ def addRequiredBasedTrainSerie(train_serie_day: np.array, bk: BackgroundKnowledg
     return bk
 
 
-def createStationDict(train_serie_day: np.array):
+def createStationDict(train_serie_day: np.array) -> Dict[str, Tuple[datetime.time, TrainRideNode]]:
+    # Partition the data per station, such that we can find dependencies within a station fast
     station_dict = {}  # example: bkl: [(8:15, TrainRideNode1), (13:05, TrainRideNode2)]
 
     # for each station, list all the trains that arrive there with its arrival time and TrainRideNode
@@ -84,8 +90,8 @@ def createStationDict(train_serie_day: np.array):
     return station_dict
 
 
-def addRequiredBasedOnStation(train_serie_day: np.array, bk: BackgroundKnowledge, mapper_dict: dict,
-                              station_dict: dict) -> BackgroundKnowledge:
+def addRequiredBasedOnStation(bk: BackgroundKnowledge, mapper_dict: Dict[str,str],
+                              station_dict: Dict[str, Tuple[datetime.time, TrainRideNode]] ) -> BackgroundKnowledge:
     buffer = 30  # minutes
     # for each station, sort the list on arrival time and if the arrival time is within the buffer time, add a dependency
     for station_list in station_dict.values():
@@ -103,7 +109,8 @@ def addRequiredBasedOnStation(train_serie_day: np.array, bk: BackgroundKnowledge
     return bk
 
 
-def addForbiddenStationTimeWise(time_trn, trn, same_station_list, bk, mapper_dict):
+def addForbiddenStationTimeWise(time_trn : datetime.time, trn : TrainRideNode, same_station_list : List[Tuple[datetime.time, TrainRideNode]],
+                                bk: BackgroundKnowledge, mapper_dict: Dict[str,str]) -> BackgroundKnowledge:
     buffer = 30  # minutes
     for (same_time_trn, same_trn) in same_station_list:
         if same_trn.getID() == trn.getID():
@@ -115,8 +122,8 @@ def addForbiddenStationTimeWise(time_trn, trn, same_station_list, bk, mapper_dic
     return bk
 
 
-def addForbiddenBasedOnStation(train_serie_day: np.array, bk: BackgroundKnowledge, mapper_dict: dict,
-                               station_dict: dict) -> BackgroundKnowledge:
+def addForbiddenBasedOnStation(bk: BackgroundKnowledge, mapper_dict: Dict[str,str],
+                               station_dict: Dict[str, Tuple[datetime.time, TrainRideNode]]) -> BackgroundKnowledge:
     # add forbidden dependencies if they are not at the same station
     for station, station_list in station_dict.items():
         # for each train + station in the list
@@ -133,7 +140,7 @@ def addForbiddenBasedOnStation(train_serie_day: np.array, bk: BackgroundKnowledg
     return bk
 
 
-def createBackgroundKnowledge(train_series: np.array, mapper_dict: dict) -> BackgroundKnowledge:
+def createBackgroundKnowledge(train_series: np.array, mapper_dict: Dict[str,str]) -> BackgroundKnowledge:
     # make sure that the order of train rides is ordered by train numbers
 
     # create background knowledge, take into account:
@@ -141,16 +148,16 @@ def createBackgroundKnowledge(train_series: np.array, mapper_dict: dict) -> Back
     # 2. Trains that are on the same station within x minutes may have a direct cause.
     # 3. Trains that are not in the same station cannot have a direct cause.
     station_dict = createStationDict(train_series[0])
-    bk = BackgroundKnowledge()
-    # first add the required edges, themn the forbidden edges (forbidden edges checks if some edge was already required, then it does not add a forbidden edge)
-    bk = addRequiredBasedOnStation(train_series[0], bk, mapper_dict, station_dict)
+    bk = FastBackgroundKnowledge()
+    # first add the required edges, then the forbidden edges (forbidden edges checks if some edge was already required, then it does not add a forbidden edge)
+    bk = addRequiredBasedOnStation(bk, mapper_dict, station_dict)
     bk = addRequiredBasedTrainSerie(train_series[0], bk, mapper_dict)
-    bk = addForbiddenBasedOnStation(train_series[0], bk, mapper_dict, station_dict)
+    bk = addForbiddenBasedOnStation(bk, mapper_dict, station_dict)
 
     return bk
 
 
-def backgroundToGraph(bk: BackgroundKnowledge, column_names, mapper_dict) -> CausalGraph:
+def backgroundToGraph(bk: BackgroundKnowledge, column_names: List[str], mapper_dict : Dict[str,str]) -> CausalGraph:
     # create all nodes
     nodes = [GraphNode(mapper_dict[i]) for i in column_names]
     # form to CausalGraph
@@ -167,24 +174,26 @@ def backgroundToGraph(bk: BackgroundKnowledge, column_names, mapper_dict) -> Cau
     return cg
 
 
-def variableNamesToNumber(day):
+def variableNamesToNumber(day : List[TrainRideNode]) -> Tuple[Dict[str,str], Dict[str,str]]:
     counter = 1
-    mapper_dict = {}
+    trn_name_id_dict = {}
+    id_trn_name_dict = {}
     for trn in day:
-        mapper_dict[trn.getID()] = 'X' + str(counter)
+        trn_name_id_dict[trn.getID()] = 'X' + str(counter)
+        id_trn_name_dict['X' + str(counter)] = trn.getID()
         counter += 1
 
-    return mapper_dict
+    return trn_name_id_dict, id_trn_name_dict
 
 
-def get_CG_and_background(dataset_with_classes, filename: str):
+def get_CG_and_background(dataset_with_classes : np.array, filename: str) -> Tuple[BackgroundKnowledge, CausalGraph]:
     day = dataset_with_classes[0]
-    mapper_dict = variableNamesToNumber(day)
-    background = createBackgroundKnowledge(dataset_with_classes, mapper_dict)
-    f = lambda x: x.getID()
-    column_names = np.array(list(map(f, day)))
+    trn_name_id_dict, id_trn_name_dict = variableNamesToNumber(day)
+    background = createBackgroundKnowledge(dataset_with_classes, trn_name_id_dict)
 
-    cg_sched = backgroundToGraph(background, column_names, mapper_dict)
+    column_names = list(map(lambda x: x.getID(), day))
+
+    cg_sched = backgroundToGraph(background, column_names, trn_name_id_dict)
     # labels = column_names
     pdy = GraphUtils.to_pydot(cg_sched.G, labels=column_names)
     pdy.write_png(filename)

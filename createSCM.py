@@ -26,41 +26,11 @@ from causallearn.utils.cit import chisq, fisherz, gsq, kci, mv_fisherz, d_separa
 from causallearn.search.FCMBased import lingam
 from causallearn.search.FCMBased.lingam.utils import make_dot
 import time
+from typing import List
 
 """### Compare two SCM's"""
 
-# Compare two SCM's and return the differences
-def compareSCM(cg1, cg2, mapper = (lambda a : a)):
-  g1 = cg1.G.graph
-  g2 = cg2.G.graph
-  comparison = g1 == g2
-  differences = []
-  for node in range(len(comparison)):
-    for i, val in enumerate(comparison[node]):
-      if val == False:
-        # don't add both differences (0,8) and (8,0), only (0,8)
-        if (i,node) not in differences:
-          differences.append((node, i))
-  edges = [] 
-  for g in [g1,g2]:
-    for i,j in differences:
-      if g[i][j] == -1:
-        if g[j][i] == -1:
-          edges.append(str(mapper(i+1)) + "\t----\t" + str(mapper(j+1)))
-        else:
-          edges.append(str(mapper(i+1))  + "\t--->\t" +  str(mapper(j+1)))
-      if g[i][j] == 1:
-        if g[j][i] == 1:
-          edges.append(str(mapper(i+1))  + "\t<-->\t" +  str(mapper(j+1)))
-        else:
-          edges.append(str(mapper(i+1)) + "\t<---\t" +  str(mapper(j+1)))
-      if g[i][j] == 0:
-          edges.append(str(mapper(i+1))  + "\txxxx\t" +  str(mapper(j+1)))
-  
-  return list(zip(edges[:len(edges)//2], edges[len(edges)//2:]))
-
-
-def createCGWithPC(data, filename, column_names, bk = None):
+def createCGWithPC(data : np.array, filename : str, column_names : List[str], bk : BackgroundKnowledge= None) -> CausalGraph:
   cg_pc = pc(data, 0.05, fisherz, background_knowledge=bk)
 
   # visualization using pydot #
@@ -68,7 +38,7 @@ def createCGWithPC(data, filename, column_names, bk = None):
   pdy.write_png(filename)
   return cg_pc
 
-def createCGWithFCI(method, data, filename, column_names = None, bk = None):
+def createCGWithFCI(method : str, data : np.array, filename : str, column_names : List[str] = None, bk : BackgroundKnowledge = None) -> CausalGraph:
   with_or_without = "with" if bk != None else "without"
   print("start with FCI "+ with_or_without +" background")
   start = time.time()
@@ -87,11 +57,10 @@ def createCGWithFCI(method, data, filename, column_names = None, bk = None):
   pdy.write_png(filename)
   return cgFCI
 
-def backgroundToMatrix(bk: BackgroundKnowledge, column_names):
+def backgroundToMatrix(bk: BackgroundKnowledge, column_names : List[str]) -> np.array:
   if (bk == None):
     return None
   prior_knowledge = np.ones((len(column_names), len(column_names))) * -1
-  dict_test = {}
   for (i, j) in bk.forbidden_rules_specs:
     index_i = (int(i.get_name().replace('X', ''))-1)
     index_j = (int(j.get_name().replace('X', ''))-1)
@@ -108,7 +77,7 @@ def backgroundToMatrix(bk: BackgroundKnowledge, column_names):
 
   return prior_knowledge
 
-def createCGWithDirectLiNGAM(data, filename, column_names_par = None, bk = None):
+def createCGWithDirectLiNGAM(data, filename, column_names_par = None, bk = None) -> None:
   column_names = column_names_par
   pk = None
   if bk != None:

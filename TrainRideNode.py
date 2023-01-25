@@ -10,7 +10,7 @@ class TrainRideNode:
         self.plannedTime = plannedTime
 
     def __str__(self):
-        return f'{self.trainRideNumber} at {self.stationName}, {self.platformNumber}, {self.activity} with delay {self.delay}'
+        return f'{self.trainRideNumber}_{self.stationName}_{self.platformNumber}_{self.activity}_{self.delay}'
 
     def __repr__(self):
         return self.__str__()

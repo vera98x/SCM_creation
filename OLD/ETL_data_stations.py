@@ -4,7 +4,7 @@ import numpy as np
 from TrainRideNode import TrainRideNode
 from StationNode import StationNode
 from typing import List
-from test6100 import retrieveDataframeNew
+from Load_transform_df import retrieveDataframe
 
 # The values in the CSV file differ sometimes to here are global vlaues
 basic_treinnr = 'basic_treinnr' #'basic|treinnr'
@@ -125,7 +125,7 @@ def dfToTrainRides(df):
     return dataset_with_classes
 
 def getDataSetWith_TRN(export_name, workdays, list_of_trainseries):
-    df = retrieveDataframeNew('Data/6100_jan_nov_2022.csv')
+    df = retrieveDataframe('Data/6100_jan_nov_2022.csv')
     print(len(df))
     df = keepTrainseries(df, list_of_trainseries)
     print(len(df))

@@ -1,9 +1,7 @@
-import numpy as np
-import datetime
 import time
 
-from createscm import createCGWithPC, createCGWithFCI, createCGWithDirectLiNGAM
-from ETL_data_stations import getDataSetWith_TRN, class_dataset_to_delay_columns_pair
+from createSCM import createCGWithFCI
+from OLD.ETL_data_stations import getDataSetWith_TRN, class_dataset_to_delay_columns_pair
 from createBackground import get_CG_and_background
 
 def extractSchedulesFromStations(dataset_with_classes):

@@ -2,36 +2,44 @@ import numpy as np
 import datetime
 import time
 
-from createscm import createCGWithPC, createCGWithFCI, createCGWithDirectLiNGAM
-from ETL_data_day import getDataSetWith_TRN, class_dataset_to_delay_columns_pair
-from createBackground import get_CG_and_background
+from createSCM import createCGWithPC, createCGWithFCI, createCGWithDirectLiNGAM
+from ETL_data_day import TRN_matrix_to_delay_matrix_columns_pair, dfToTrainRides
+from Load_transform_df import retrieveDataframe
 from createSuperGraph import get_CG_and_superGraph
+from createBackground import variableNamesToNumber
+from FAS import FAS, createIDTRNDict
 
+def main():
+    print("extracting file")
+    export_name = 'Data/6100_jan_nov_2022_2.csv' #'Data/2019-03-01_2019-05-31.csv'
+    list_of_trainseries = ['6100']
 
-print("extracting file")
-export_name = 'Data/6100_jan_nov_2022_2.csv' #'Data/2019-03-01_2019-05-31.csv'
-list_of_trainseries = ['6100']
-dataset_with_classes = getDataSetWith_TRN(export_name, True, list_of_trainseries)
-print("extracting file done")
-#print(dataset_with_classes)
-print("translating dataset to 2d array for algo")
-smaller_dataset = dataset_with_classes[:,:] #np.concatenate((dataset_with_classes[:,:100], dataset_with_classes[:,300:400]), axis=1)
-delays_to_feed_to_algo, column_names = class_dataset_to_delay_columns_pair(smaller_dataset)
-print("Creating background knowledge")
-start = time.time()
-bk, cg_sched = get_CG_and_superGraph(smaller_dataset, 'Results/sched.png') #get_CG_and_background(smaller_dataset, 'Results/sched.png')
-bk.required_rules_to_dict()
-bk.forbidden_rules_to_dict()
-end = time.time()
-print("creating schedule took", end - start, "seconds")
-# pdy = GraphUtils.to_pydot(cg_sched.G, labels=column_names )
-# pdy.write_png("sched.png")
-method = 'mv_fisherz' #'fisherz'
+    # extract dataframe and impute missing values
+    df = retrieveDataframe(export_name, True, list_of_trainseries)
+    # change the dataframe to trainRideNodes
+    dataset_with_classes = dfToTrainRides(df)
 
-createCGWithFCI(method, delays_to_feed_to_algo, 'Results/6100_jan_nov_with_backg.png', column_names, bk)
+    print("extracting file done")
 
-# createCGWithFCI(method, delays_to_feed_to_algo, 'Results/6100_jan_nov_wo_backgr.png', column_names)
+    print("translating dataset to 2d array for algo")
+    # have a smaller dataset for testing purposes
+    smaller_dataset = dataset_with_classes[:,:] #np.concatenate((dataset_with_classes[:,:100], dataset_with_classes[:,300:400]), axis=1)
+    # get the schedule
+    sched_with_classes = smaller_dataset[0]
+    # translate the TrainRideNodes to delays
+    res_dict = TRN_matrix_to_delay_matrix_columns_pair(smaller_dataset)
+    delays_to_feed_to_algo, column_names = res_dict['delay_matrix'], res_dict['column_names']
 
+    # create a background and its schedule (background for Pc or FCI, cg_sched for GES)
+    bk, cg_sched = get_CG_and_superGraph(sched_with_classes, 'Results/sched.png') #get_CG_and_background(smaller_dataset, 'Results/sched.png')
 
-#for i,j in (compareSCM(fci_cg, fci_cg_none)):
-  #print(i, "   \t", j)
+    # independence test methods for Pc or FCI
+    method = 'mv_fisherz' #'fisherz'
+    trn_name_id_dict, id_trn_name_dict = variableNamesToNumber(sched_with_classes)
+    #create a Causal Graph
+    id_trn_dict = createIDTRNDict(sched_with_classes)
+    FAS(method, delays_to_feed_to_algo, 'Results/6100_jan_nov_with_backg.png', id_trn_dict, id_trn_name_dict, column_names, bk)
+
+    # createCGWithFCI(method, delays_to_feed_to_algo, 'Results/6100_jan_nov_wo_backgr.png', column_names)
+
+main()

@@ -6,11 +6,12 @@ from causallearn.utils.GESUtils import *
 from causallearn.utils.PDAG2DAG import pdag2dag
 from causallearn.utils.GraphUtils import GraphUtils
 from causallearn.search.ScoreBased.GES import ges
+from ETL_data_day import dfToTrainRides
 
 import numpy as np
 import time
 
-from ETL_data_day import getDataSetWith_TRN, class_dataset_to_delay_columns_pair
+from ETL_data_day import TRN_matrix_to_delay_matrix_columns_pair
 from createSuperGraph import get_CG_and_superGraph
 
 
@@ -124,12 +125,13 @@ def backwardGES(X: ndarray, supergraph: GeneralGraph, score_func: str = 'local_s
 print("extracting file")
 export_name = 'Data/6100_jan_nov_2022_2.csv' #'Data/2019-03-01_2019-05-31.csv'
 list_of_trainseries = ['6100']
-dataset_with_classes = getDataSetWith_TRN(export_name, True, list_of_trainseries)
+df = retrieveDataframe(export_name, True, list_of_trainseries)
+dataset_with_classes = dfToTrainRides(df)
 print("extracting file done")
 print(dataset_with_classes)
 print("translating dataset to 2d array for algo")
 smaller_dataset = dataset_with_classes[:,:] #np.concatenate((dataset_with_classes[:,:100], dataset_with_classes[:,300:400]), axis=1)
-delays_to_feed_to_algo, column_names = class_dataset_to_delay_columns_pair(smaller_dataset)
+delays_to_feed_to_algo, column_names = TRN_matrix_to_delay_matrix_columns_pair(smaller_dataset)
 print("Creating background knowledge")
 start = time.time()
 bk, cg_sched = get_CG_and_superGraph(smaller_dataset, 'Results/sched.png') #get_CG_and_background(smaller_dataset, 'Results/sched.png')
