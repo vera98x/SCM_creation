@@ -5,28 +5,17 @@ from causallearn.utils.DAG2CPDAG import dag2cpdag
 from causallearn.utils.GESUtils import *
 from causallearn.utils.PDAG2DAG import pdag2dag
 from causallearn.utils.GraphUtils import GraphUtils
-from causallearn.search.ScoreBased.GES import ges
-from ETL_data_day import dfToTrainRides
+from ETL_data_day import dfToTrainRides, TRN_matrix_to_delay_matrix_columns_pair
+from Load_transform_df import retrieveDataframe
+from createSuperGraph import get_CG_and_superGraph
 
 import numpy as np
 import time
 
-from ETL_data_day import TRN_matrix_to_delay_matrix_columns_pair
-from createSuperGraph import get_CG_and_superGraph
-
-
 # the goal of the ScoreBasedMethod is to first implement the supergraph using domain knowledge and then adding the backward part of the greedy search to optimize this score.
 
-def completeGES(data, filename, score_func: str = 'local_score_BIC'):
-    r = ges(data, score_func)
-    # visualization using pydot #
-    pdy = GraphUtils.to_pydot(r['G'], labels=column_names)
-    pdy.write_png(filename)
-
-def backwardGES(X: ndarray, supergraph: GeneralGraph, score_func: str = 'local_score_BIC',
-        parameters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def initializeGES(X : numpy.matrix, score_func : str, parameters: Optional[Dict[str, Any]]) -> Tuple[LocalScoreClass, int]:
     maxP = None
-    #variables from forward search:
     if score_func == 'local_score_marginal_multi':  # negative marginal likelihood based on regression in RKHS
         # for data with multi-variate dimensions
         if parameters is None:
@@ -37,6 +26,12 @@ def backwardGES(X: ndarray, supergraph: GeneralGraph, score_func: str = 'local_s
             maxP = len(parameters['dlabel']) / 2
         N = len(parameters['dlabel'])
         localScoreClass = LocalScoreClass(data=X, local_score_fun=local_score_marginal_multi, parameters=parameters)
+    elif score_func == 'local_score_marginal_general':  # negative marginal likelihood based on regression in RKHS
+        parameters = {}
+        if maxP is None:
+            maxP = X.shape[1] / 2  # maximum number of parents
+        N = X.shape[1]  # number of variables
+        localScoreClass = LocalScoreClass(data=X, local_score_fun=local_score_marginal_general, parameters=parameters)
     elif score_func == 'local_score_BIC' or score_func == 'local_score_BIC_from_cov':  # Greedy equivalence search with BIC score
         if maxP is None:
             maxP = X.shape[1] / 2
@@ -44,31 +39,43 @@ def backwardGES(X: ndarray, supergraph: GeneralGraph, score_func: str = 'local_s
         parameters = {}
         parameters["lambda_value"] = 2
         localScoreClass = LocalScoreClass(data=X, local_score_fun=local_score_BIC_from_cov, parameters=parameters)
-    #set because of bic:
+    else:
+        raise Exception('Unknown score function!')
 
-    score_func = localScoreClass
+    return localScoreClass, N
+
+def backwardGES(X: ndarray, supergraph: GeneralGraph, score_func: str = 'local_score_BIC',
+        parameters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+
+    #variables from forward search:
+    if X.shape[0] < X.shape[1]:
+        warnings.warn("The number of features is much larger than the sample size!")
+
+    X = np.mat(X)
+    print("TYPE(X):", type(X))
+
+    score_func, N = initializeGES(X, score_func, parameters)
     update1 = []
     G_step1 = [supergraph]
     G = supergraph
     record_local_score = [[] for i in range(N)]
-
+    print("calc score:")
+    start_score = time.time()
     score = score_g(X, supergraph, score_func, parameters)  # initialize the score
+    end_score = time.time()
+    print()
+    print("creating GES initial score is done, it took", end_score - start_score, "seconds")
+
     print('Initial score is:', score)
 
     # backward greedy search
     print('backward')
-    count2 = 0
     score_new = score
     update2 = []
     G_step2 = []
-    score_record2 = []
-    graph_record2 = []
 
     while True:
-        count2 = count2 + 1
         score = score_new
-        score_record2.append(score)
-        graph_record2.append(G)
         min_chscore = 1e7
         min_desc = []
         for i in range(N):
@@ -128,24 +135,24 @@ list_of_trainseries = ['6100']
 df = retrieveDataframe(export_name, True, list_of_trainseries)
 dataset_with_classes = dfToTrainRides(df)
 print("extracting file done")
-print(dataset_with_classes)
+
 print("translating dataset to 2d array for algo")
-smaller_dataset = dataset_with_classes[:,:] #np.concatenate((dataset_with_classes[:,:100], dataset_with_classes[:,300:400]), axis=1)
-delays_to_feed_to_algo, column_names = TRN_matrix_to_delay_matrix_columns_pair(smaller_dataset)
-print("Creating background knowledge")
-start = time.time()
-bk, cg_sched = get_CG_and_superGraph(smaller_dataset, 'Results/sched.png') #get_CG_and_background(smaller_dataset, 'Results/sched.png')
-end = time.time()
-print("creating schedule took", end - start, "seconds")
+smaller_dataset = dataset_with_classes[:,:100] #np.concatenate((dataset_with_classes[:,:100], dataset_with_classes[:,300:400]), axis=1)
+# get the schedule
+sched_with_classes = smaller_dataset[0]
+res_dict = TRN_matrix_to_delay_matrix_columns_pair(smaller_dataset)
+delays_to_feed_to_algo, column_names = res_dict['delay_matrix'], res_dict['column_names']
+
+bk, cg_sched = get_CG_and_superGraph(sched_with_classes, 'Results/sched.png') #get_CG_and_background(smaller_dataset, 'Results/sched.png')
 method = 'mv_fisherz' #'fisherz'
 print("start with GES and background")
 #completeGES(delays_to_feed_to_algo, 'Results/6100_jan_nov_wo_backgr.png', 'local_score_BIC')
 start = time.time()
-r = backwardGES(delays_to_feed_to_algo, cg_sched.G)
+r = backwardGES(delays_to_feed_to_algo, cg_sched.G, 'local_score_marginal_general')
 end = time.time()
 print("score:", r['score'])
 print()
-print("creating SCM with background is done, it took" , end - start, "seconds")
+print("creating GES is done, it took" , end - start, "seconds")
 pdy = GraphUtils.to_pydot(r['G'], labels=column_names)
 pdy.write_png('Results/6100_jan_nov_with_backg.png')
 # print("starting normal GES")

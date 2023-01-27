@@ -70,8 +70,8 @@ def makeDataUniform(df : pd.DataFrame) ->  pd.DataFrame:
             add_extra_activities = diff[(diff["date"] == example_date)]
             add_extra_activities['date'] = day_date
             add_extra_activities['sorting_time'] = add_extra_activities['basic|plan']
-            add_extra_activities['basic|uitvoer'] = np.nan
-            add_extra_activities['basic|plan'] = np.nan
+            #add_extra_activities['basic|uitvoer'] = np.nan
+            #add_extra_activities['basic|plan'] = np.nan
 
             # TODO: when creating the dataset, remove the basic plan and basic uitvoer
             df_res['sorting_time'] = df_res['basic|plan']
@@ -123,7 +123,8 @@ def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: L
     print(type(df['uitvoer|time'].iloc[0]))
 
     df['delay'] = df['basic|uitvoer'] - df['basic|plan']
-    df['delay'] = df['delay'].map(lambda x: x.total_seconds())
+    df['delay'] = df['delay'].map(lambda x: int(x.total_seconds()))
+
     #df['basic|spoor'].fillna(np.nan, inplace=True)
 
     print(len(df))

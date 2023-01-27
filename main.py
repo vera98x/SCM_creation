@@ -7,6 +7,7 @@ from ETL_data_day import TRN_matrix_to_delay_matrix_columns_pair, dfToTrainRides
 from Load_transform_df import retrieveDataframe
 from createSuperGraph import get_CG_and_superGraph
 from createBackground import variableNamesToNumber
+from createSCM import createCGWithGES
 from FAS import FAS, createIDTRNDict
 
 def main():
@@ -23,7 +24,7 @@ def main():
 
     print("translating dataset to 2d array for algo")
     # have a smaller dataset for testing purposes
-    smaller_dataset = dataset_with_classes[:,:] #np.concatenate((dataset_with_classes[:,:100], dataset_with_classes[:,300:400]), axis=1)
+    smaller_dataset = dataset_with_classes[:,:10] #np.concatenate((dataset_with_classes[:,:100], dataset_with_classes[:,300:400]), axis=1)
     # get the schedule
     sched_with_classes = smaller_dataset[0]
     # translate the TrainRideNodes to delays
@@ -38,7 +39,8 @@ def main():
     trn_name_id_dict, id_trn_name_dict = variableNamesToNumber(sched_with_classes)
     #create a Causal Graph
     id_trn_dict = createIDTRNDict(sched_with_classes)
-    FAS(method, delays_to_feed_to_algo, 'Results/6100_jan_nov_with_backg.png', id_trn_dict, id_trn_name_dict, column_names, bk)
+    createCGWithGES(delays_to_feed_to_algo, 'Results/6100_jan_nov_with_backg.png', 'local_score_BIC', column_names)
+    #FAS(method, delays_to_feed_to_algo, 'Results/6100_jan_nov_with_backg.png', id_trn_dict, id_trn_name_dict, column_names, bk)
 
     # createCGWithFCI(method, delays_to_feed_to_algo, 'Results/6100_jan_nov_wo_backgr.png', column_names)
 

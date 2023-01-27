@@ -78,13 +78,13 @@ def FAS(method : str, data : np.array, filename : str, id_trn_dict: Dict[str, Tr
     with_or_without = "with" if bk != None else "without"
     print("start with FAS " + with_or_without + " background")
     start = time.time()
-    ggFAS = startupFAS(data, method, background_knowledge= bk)
+    gg_fas = startupFAS(data, method, background_knowledge= bk)
     end = time.time()
     print("FAS:", "it took", end - start, "seconds")
-    orientEdges(ggFAS, id_trn_dict, mapper_dict)
+    orientEdges(gg_fas, id_trn_dict, mapper_dict)
     end = time.time()
     print("creating SCM of FAS " + with_or_without + " background is done, it took", end - start, "seconds")
 
-    pdy = GraphUtils.to_pydot(ggFAS, labels=column_names)
+    pdy = GraphUtils.to_pydot(gg_fas, labels=column_names)
     pdy.write_png(filename)
-    return ggFAS
+    return gg_fas

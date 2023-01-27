@@ -1,7 +1,7 @@
 # clean data
 import numpy as np
 import pandas as pd
-from typing import List, Dict
+from typing import List, Dict, Union
 from TrainRideNode import TrainRideNode
 
 
@@ -37,12 +37,11 @@ def dfToTrainRides(df : pd.DataFrame) -> np.array:
 
 
 # Create format for data to feed in PC algorithm
-def TRN_matrix_to_delay_matrix_columns_pair(dataset_with_classes : np.array) -> Dict[np.array, List[str]]:
-    array_with_delays_2d = np.zeros((0, len(dataset_with_classes[0])))
+def TRN_matrix_to_delay_matrix_columns_pair(dataset_with_classes : np.array) -> Dict[str, Union[np.array, str]]:
+    array_with_delays_2d = np.zeros((0, len(dataset_with_classes[0]))).astype(int)
     column_names = np.array(list(map(lambda x: x.getID(), dataset_with_classes[0])))
     for day in dataset_with_classes:
-        delays = np.array(list(map(lambda x: x.getDelay(), day)))
-
+        delays = np.array(list(map(lambda x: int(x.getDelay()), day)))
         array_with_delays_2d = np.r_[array_with_delays_2d, [delays]]
     resDict = {}
     resDict['delay_matrix'] = array_with_delays_2d

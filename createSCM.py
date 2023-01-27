@@ -22,6 +22,7 @@ import numpy as np
 
 from causallearn.search.ConstraintBased.PC import pc
 from causallearn.search.ConstraintBased.FCI import fci
+from causallearn.search.ScoreBased.GES import ges
 from causallearn.utils.cit import chisq, fisherz, gsq, kci, mv_fisherz, d_separation
 from causallearn.search.FCMBased import lingam
 from causallearn.search.FCMBased.lingam.utils import make_dot
@@ -56,6 +57,16 @@ def createCGWithFCI(method : str, data : np.array, filename : str, column_names 
   pdy = GraphUtils.to_pydot(ggFCI,labels = column_names)
   pdy.write_png(filename)
   return cgFCI
+
+def createCGWithGES(data, filename, score_func: str = 'local_score_BIC', column_names : List[str] = None):
+  print("start with GES ")
+  start = time.time()
+  r = ges(data, score_func)
+  end = time.time()
+  print("creating GES is done, it took", end - start, "seconds")
+  # visualization using pydot #
+  pdy = GraphUtils.to_pydot(r['G'], labels=column_names)
+  pdy.write_png(filename)
 
 def backgroundToMatrix(bk: BackgroundKnowledge, column_names : List[str]) -> np.array:
   if (bk == None):

@@ -1,6 +1,6 @@
 
 class TrainRideNode:
-    def __init__(self, trainRideNumber: int, stationName: str, platformNumber: int, activity: str, delay: float,
+    def __init__(self, trainRideNumber: int, stationName: str, platformNumber: int, activity: str, delay: int,
                  plannedTime):
         self.trainRideNumber = trainRideNumber
         self.stationName = stationName
@@ -18,7 +18,7 @@ class TrainRideNode:
     def isSameLocation(self, trn) -> bool:
         return (self.stationName == trn.stationName and self.platformNumber == trn.platformNumber)
 
-    def getDelay(self):
+    def getDelay(self) -> int:
         return self.delay
 
     def getTrainRideNumber(self):
