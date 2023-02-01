@@ -47,8 +47,10 @@ def makeDataUniform(df : pd.DataFrame) ->  pd.DataFrame:
     # get first dataframe as example to compare from
     example = grouped_by_date[0]
     example_date = example.iloc[0]['date']
-    print(example_date)
 
+    df_new = pd.DataFrame(columns=df.columns)
+
+    print("len(grouped_by_date): ", len(grouped_by_date))
     # loop through every other frame, compare the columns
     for day_index in range(len(grouped_by_date)):
         day = grouped_by_date[day_index]
@@ -105,37 +107,41 @@ def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: L
     df['basic|uitvoer'] = df['basic|uitvoer'].fillna(df['basic|plan'])
     df['date'] = pd.to_datetime(df['basic|plan']).dt.date
 
+
+    df = keepTrainseries(df, list_of_trainseries)
+
     df = changeToD(df)
 
     #group per trainserie and make uniform
-    gb = df.groupby(['basic_treinnr_treinserie'])
-    trainserieList = [gb.get_group(x) for x in gb.groups]
-    for trainserie_index in range(len(trainserieList)):
-        trainserie = trainserieList[trainserie_index]
-        trainserieList[trainserie_index] = makeDataUniform(trainserie)
-    df = pd.concat(trainserieList)
+    #TODO: changed this
+    #gb = df.groupby(['basic_treinnr_treinserie'])
+    #trainserieList = [gb.get_group(x) for x in gb.groups]
+    #for trainserie_index in range(len(trainserieList)):
+        #trainserie = trainserieList[trainserie_index]
+        #trainserieList[trainserie_index] = makeDataUniform(trainserie)
+
+    df = makeDataUniform(df)
+
     df = df.sort_values(by=['date', 'basic_treinnr_treinserie', "basic|treinnr", "basic|plan"])
     df = df.reset_index(drop=True)
 
 
     df['plan|time'] = pd.to_datetime(df['basic|plan']).dt.time
     df['uitvoer|time'] = pd.to_datetime(df['basic|uitvoer']).dt.time
-    print(type(df['uitvoer|time'].iloc[0]))
 
     df['delay'] = df['basic|uitvoer'] - df['basic|plan']
     df['delay'] = df['delay'].map(lambda x: int(x.total_seconds()))
 
     #df['basic|spoor'].fillna(np.nan, inplace=True)
 
-    print(len(df))
-    df = keepTrainseries(df, list_of_trainseries)
-    print(len(df))
+
     if workdays == None:
         pass
     elif workdays:
         df = keepWorkDays(df)
     elif not workdays:
         df = keepWeekendDays(df)
+
 
     return df[['date', 'basic_treinnr_treinserie','basic|treinnr', 'basic|spoor', 'basic|drp', 'basic|drp_act','plan|time','uitvoer|time', 'delay']]
 

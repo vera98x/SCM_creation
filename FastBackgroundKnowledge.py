@@ -30,14 +30,6 @@ class FastBackgroundKnowledge(BackgroundKnowledge):
 
         self.dict_required = reqDict
 
-    def add_dict_forbidden(self, dict_par):
-        self.dict_forbidden = dict_par
-        self.forbidden_rules_specs = set()
-
-    def add_dict_required(self, dict_par):
-        self.dict_required = dict_par
-        self.required_rules_specs = set()
-
     def is_forbidden(self, node1: Node, node2: Node) -> bool:
         """
         check whether the edge node1 --> node2 is forbidden

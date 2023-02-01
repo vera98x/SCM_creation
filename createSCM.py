@@ -83,12 +83,15 @@ def backgroundToMatrix(bk: BackgroundKnowledge, column_names : List[str]) -> np.
     index_i = (int(i.get_name().replace('X', ''))-1)
     index_j = (int(j.get_name().replace('X', ''))-1)
 
-    prior_knowledge[index_i][index_j] = 1
-    prior_knowledge[index_j][index_i] = 0
+    prior_knowledge[index_i][index_j] = 0
+    prior_knowledge[index_j][index_i] = 1
 
   return prior_knowledge
 
-def createCGWithDirectLiNGAM(data, filename, column_names_par = None, bk = None) -> None:
+def createCGWithDirectLiNGAM(data, filename, column_names_par = None, bk = None) -> GeneralGraph:
+  print("start with DirectLingam")
+  start = time.time()
+
   column_names = column_names_par
   pk = None
   if bk != None:
@@ -96,9 +99,18 @@ def createCGWithDirectLiNGAM(data, filename, column_names_par = None, bk = None)
 
   if type(column_names_par) == np.ndarray:
     column_names = list(column_names_par)
+
   model = lingam.DirectLiNGAM(5, prior_knowledge=pk)
   model.fit(data)
 
+  end = time.time()
+  print("creating Lingam is done, it took", end - start, "seconds")
   # visualize
   dot_graph = make_dot(model.adjacency_matrix_, labels=column_names)
   dot_graph.render(filename=filename)
+  nodes = [GraphNode('X' + str(i)) for i in range(len(column_names))]
+  gg_lingam = GeneralGraph(nodes)
+  gg_lingam.graph = model.adjacency_matrix_
+  pdy = GraphUtils.to_pydot(gg_lingam, labels=column_names)
+  pdy.write_png(filename)
+  return gg_lingam

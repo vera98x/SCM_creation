@@ -2,7 +2,7 @@
 import pandas as pd
 import numpy as np
 from TrainRideNode import TrainRideNode
-from StationNode import StationNode
+from OLD.StationNode import StationNode
 from typing import List
 from Load_transform_df import retrieveDataframe
 

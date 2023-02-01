@@ -51,27 +51,31 @@ def createIDTRNDict(sched_with_classes : np.array) -> Dict[str, TrainRideNode]:
     return result_dict
 
 def orientEdges(ggFas : GeneralGraph, id_trn_dict : Dict[str, TrainRideNode], mapper_dict : Dict[str, str]):
+    nodes = ggFas.get_nodes()
+    num_vars = len(nodes)
+    for node in nodes:
+        node_name = mapper_dict[node.get_name()]
+        trn_time = id_trn_dict[node_name].getPlannedTime()
+        node.add_attribute('time', trn_time)
     edges = ggFas.get_graph_edges()
+    # empty the complete graph
+    ggFas.graph = np.zeros((num_vars, num_vars), np.dtype(int))
+    # add new nodes
     for edge in edges:
         # get nodes from edge
         node1 = edge.get_node1()
-        node1_name = mapper_dict[node1.get_name()]
         node2 = edge.get_node2()
-        node2_name = mapper_dict[node2.get_name()]
         # map edges to TRN + get time
-        trn1_time = id_trn_dict[node1_name].getPlannedTime()
-        trn2_time = id_trn_dict[node2_name].getPlannedTime()
+        trn1_time = node1.get_attribute('time')
+        trn2_time = node2.get_attribute('time')
         #order in timewise
         if trn1_time > trn2_time:
-            #delete old undirected edge
-            ggFas.remove_edge(edge)
             #add directed edge
-            ggFas.add_edge(Edge(node1, node2, Endpoint.ARROW, Endpoint.TAIL))
+            ggFas.add_directed_edge(node2, node1)
+
         else:
-            # delete old undirected edge
-            ggFas.remove_edge(edge)
             # add directed edge
-            ggFas.add_edge(Edge(node2, node1, Endpoint.ARROW, Endpoint.TAIL))
+            ggFas.add_directed_edge(node1, node2)
     return ggFas
 
 def FAS(method : str, data : np.array, filename : str, id_trn_dict: Dict[str, TrainRideNode], mapper_dict : Dict[str, str], column_names : List[str] = None, bk : BackgroundKnowledge = None) -> GeneralGraph:

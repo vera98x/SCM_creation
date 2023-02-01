@@ -1,12 +1,14 @@
 import pandas as pd
 from typing import List
+from Load_transform_df import makeDataUniform
 
 
 def createTestSample():
-    d = {'basic|uitvoer': ["1-3-2019 05:26:01", "1-3-2019 05:27:00", "1-3-2019 05:36:00","1-3-2019  05:37:00"],
+    d = {'basic|uitvoer': ["1-3-2019 05:26:01", "1-3-2019 05:27:00", "1-3-2019 05:36:00","2-3-2019  05:26:01"],
          'delay': [0,1,2,1],
          'basic|drp_act': ["V", "D", "A","D"],
-         'basic_treinnr_treinserie': ["500E","500E","500E","500E"],
+         'basic|drp': ["Bkl", "Ma", "Utzl","Bkl"],
+         'basic_treinnr_treinserie': ["600E","500E","500E","600E"],
          'basic|treinnr': ["501","501","501","501"]}
     df = pd.DataFrame(data=d)
 
@@ -45,18 +47,5 @@ def changeD(df_complete):
 
 
 
-pd.set_option('display.max_columns', None)
-print(changeD(createTestSample()))
-
-#df1 = changeD(createTestSample())
-# print(df1)
-
-d = {'basic|uitvoer': ["1-3-2019", "1-3-2019", "1-3-2019","1-3-2019"],
-         'delay': [0,1,2,1],
-         'basic|drp_act': ["V", "D", "A","D"],
-         'basic_treinnr_treinserie': ["500E","500E","500E","500E"],
-         'basic|treinnr': ["501","501","501","501"]}
-df = pd.DataFrame(data=d)
-df['basic|uitvoer'] = pd.to_datetime(df['basic|uitvoer'], format='%m-%d-%Y')
-print(df.dtypes)
+print( makeDataUniform(createTestSample()))
 

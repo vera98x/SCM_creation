@@ -14,6 +14,13 @@ import time
 
 # the goal of the ScoreBasedMethod is to first implement the supergraph using domain knowledge and then adding the backward part of the greedy search to optimize this score.
 
+def getScore(data : np.array, result_graph : GeneralGraph) -> float:
+    X = np.mat(data)
+    parameters = {}
+    score_func = LocalScoreClass(data=X, local_score_fun=local_score_marginal_general, parameters=parameters)
+    score = score_g(X, result_graph, score_func, parameters)  # initialize the score
+    return score
+
 def initializeGES(X : numpy.matrix, score_func : str, parameters: Optional[Dict[str, Any]]) -> Tuple[LocalScoreClass, int]:
     maxP = None
     if score_func == 'local_score_marginal_multi':  # negative marginal likelihood based on regression in RKHS
@@ -44,15 +51,15 @@ def initializeGES(X : numpy.matrix, score_func : str, parameters: Optional[Dict[
 
     return localScoreClass, N
 
-def backwardGES(X: ndarray, supergraph: GeneralGraph, score_func: str = 'local_score_BIC',
+def backwardGES(X: ndarray, supergraph: GeneralGraph, column_names: List[str], filename : str, score_func: str = 'local_score_BIC',
         parameters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    start = time.time()
 
     #variables from forward search:
     if X.shape[0] < X.shape[1]:
         warnings.warn("The number of features is much larger than the sample size!")
 
     X = np.mat(X)
-    print("TYPE(X):", type(X))
 
     score_func, N = initializeGES(X, score_func, parameters)
     update1 = []
@@ -124,37 +131,37 @@ def backwardGES(X: ndarray, supergraph: GeneralGraph, score_func: str = 'local_s
         else:
             score_new = score
             break
+    end = time.time()
+    print()
+    print("creating GES backward is done, it took", end - start, "seconds")
 
     Record = {'update1': update1, 'update2': update2, 'G_step1': G_step1, 'G_step2': G_step2, 'G': G, 'score': score}
+    pdy = GraphUtils.to_pydot(G, labels=column_names)
+    pdy.write_png(filename)
     return Record
 
 
-print("extracting file")
-export_name = 'Data/6100_jan_nov_2022_2.csv' #'Data/2019-03-01_2019-05-31.csv'
-list_of_trainseries = ['6100']
-df = retrieveDataframe(export_name, True, list_of_trainseries)
-dataset_with_classes = dfToTrainRides(df)
-print("extracting file done")
+# print("extracting file")
+# export_name = 'Data/6100_jan_nov_2022_2.csv' #'Data/2019-03-01_2019-05-31.csv'
+# list_of_trainseries = ['6100']
+# df = retrieveDataframe(export_name, True, list_of_trainseries)
+# dataset_with_classes = dfToTrainRides(df)
+# print("extracting file done")
+#
+# print("translating dataset to 2d array for algo")
+# smaller_dataset = dataset_with_classes[:,:100] #np.concatenate((dataset_with_classes[:,:100], dataset_with_classes[:,300:400]), axis=1)
+# # get the schedule
+# sched_with_classes = smaller_dataset[0]
+# res_dict = TRN_matrix_to_delay_matrix_columns_pair(smaller_dataset)
+# delays_to_feed_to_algo, column_names = res_dict['delay_matrix'], res_dict['column_names']
+#
+# bk, cg_sched = get_CG_and_superGraph(sched_with_classes, 'Results/sched.png') #get_CG_and_background(smaller_dataset, 'Results/sched.png')
+# method = 'mv_fisherz' #'fisherz'
+# print("start with GES and background")
+# #completeGES(delays_to_feed_to_algo, 'Results/6100_jan_nov_wo_backgr.png', 'local_score_BIC')
+#
+# r = backwardGES(delays_to_feed_to_algo, cg_sched.G, column_names, 'GES_test.png' 'local_score_marginal_general')
 
-print("translating dataset to 2d array for algo")
-smaller_dataset = dataset_with_classes[:,:100] #np.concatenate((dataset_with_classes[:,:100], dataset_with_classes[:,300:400]), axis=1)
-# get the schedule
-sched_with_classes = smaller_dataset[0]
-res_dict = TRN_matrix_to_delay_matrix_columns_pair(smaller_dataset)
-delays_to_feed_to_algo, column_names = res_dict['delay_matrix'], res_dict['column_names']
-
-bk, cg_sched = get_CG_and_superGraph(sched_with_classes, 'Results/sched.png') #get_CG_and_background(smaller_dataset, 'Results/sched.png')
-method = 'mv_fisherz' #'fisherz'
-print("start with GES and background")
-#completeGES(delays_to_feed_to_algo, 'Results/6100_jan_nov_wo_backgr.png', 'local_score_BIC')
-start = time.time()
-r = backwardGES(delays_to_feed_to_algo, cg_sched.G, 'local_score_marginal_general')
-end = time.time()
-print("score:", r['score'])
-print()
-print("creating GES is done, it took" , end - start, "seconds")
-pdy = GraphUtils.to_pydot(r['G'], labels=column_names)
-pdy.write_png('Results/6100_jan_nov_with_backg.png')
 # print("starting normal GES")
 # start = time.time()
 # completeGES(delays_to_feed_to_algo, 'Results/6100_jan_nov_wo_backgr.png')
