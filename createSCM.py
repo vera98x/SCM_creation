@@ -29,8 +29,6 @@ from causallearn.search.FCMBased.lingam.utils import make_dot
 import time
 from typing import List
 
-"""### Compare two SCM's"""
-
 def createCGWithPC(data : np.array, filename : str, column_names : List[str], bk : BackgroundKnowledge= None) -> CausalGraph:
   cg_pc = pc(data, 0.05, fisherz, background_knowledge=bk)
 
