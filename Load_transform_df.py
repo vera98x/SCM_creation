@@ -120,6 +120,14 @@ def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: L
         #trainserie = trainserieList[trainserie_index]
         #trainserieList[trainserie_index] = makeDataUniform(trainserie)
 
+    df = df[~df['date'].isnull()]
+    if workdays == None:
+        pass
+    elif workdays:
+        df = keepWorkDays(df)
+    elif not workdays:
+        df = keepWeekendDays(df)
+
     df = makeDataUniform(df)
 
     df = df.sort_values(by=['date', 'basic_treinnr_treinserie', "basic|treinnr", "basic|plan"])
@@ -135,12 +143,7 @@ def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: L
     #df['basic|spoor'].fillna(np.nan, inplace=True)
 
 
-    if workdays == None:
-        pass
-    elif workdays:
-        df = keepWorkDays(df)
-    elif not workdays:
-        df = keepWeekendDays(df)
+
 
 
     return df[['date', 'basic_treinnr_treinserie','basic|treinnr', 'basic|spoor', 'basic|drp', 'basic|drp_act','plan|time','uitvoer|time', 'delay']]

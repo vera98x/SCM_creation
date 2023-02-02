@@ -5,7 +5,7 @@ import time
 from createSCM import createCGWithPC, createCGWithFCI, createCGWithDirectLiNGAM, createCGWithGES
 from ETL_data_day import TRN_matrix_to_delay_matrix_columns_pair, dfToTrainRides
 from Load_transform_df import retrieveDataframe
-from createSuperGraph import get_CG_and_superGraph
+from createSuperGraph import DomainKnowledge, Graph_type
 from createBackground import variableNamesToNumber
 from HillClimbing import hill_climbing
 from ScoreBasedMethod import backwardGES, getScore
@@ -13,12 +13,14 @@ from FAS import FAS_method
 
 def main():
     print("extracting file")
-    export_name = 'Data/2019-03-01_2019-05-31.csv' #'Data/6100_jan_nov_2022_2.csv'
-    list_of_trainseries = ['500E', '500O', '600E', '600O', '700E','700O','1800E','1800O''6200E','6200O','8100E','8100O','9000E','9000O','12600E',
+    export_name =  'Data/2019-03-01_2019-05-31.csv' #'Data/Ut_2022-01-01_2022-12-10_2.csv' #'Data/6100_jan_nov_2022_2.csv'
+    list_of_trainseries= ['500E', '500O', '600E', '600O', '700E','700O','1800E','1800O''6200E','6200O','8100E','8100O','9000E','9000O','12600E',
                            #'32200E''32200O','32300E','32300O',
                            '76200O','78100E','78100O','79000E','79000O','80000E','80000O','80200E','80200O','89200E','89200O','93200E','93200O'
                            #, '301800O','332200E','406200O'
                            ]
+
+    #list_of_trainseries_Ut = ['104VB', '120NB', '120VB', '220NB', '220VB', '402NB', '402VB', '420NB', '420VB', '500E', '500O', '600E', '600O', '800E', '800O', '1400E', '1400O', '1700E', '1700O', '2000E', '2000O', '2800E', '2800O', '2900E', '2900O', '3000E', '3000O', '3100E', '3100O', '3500E', '3500O', '3700E', '3700O', '3900E', '3900O', '4900E', '4900O', '5500E', '5500O', '5600E', '5600O', '5700E', '5700O', '6000E', '6000O', '6900E', '6900O', '7300E', '7300O', '7400E', '7400O', '8800E', '8800O']
 
     # extract dataframe and impute missing values
     df = retrieveDataframe(export_name, True, list_of_trainseries)
@@ -37,7 +39,8 @@ def main():
     delays_to_feed_to_algo, column_names = res_dict['delay_matrix'], res_dict['column_names']
 
     # create a background and its schedule (background for Pc or FCI, cg_sched for GES)
-    bk, cg_sched = get_CG_and_superGraph(sched_with_classes, 'Results/sched.png') #get_CG_and_background(smaller_dataset, 'Results/sched.png')
+    dk = DomainKnowledge(sched_with_classes, 'Results/sched.png', Graph_type.MINIMAL)
+    bk, cg_sched = dk.get_CG_and_superGraph() #get_CG_and_background(smaller_dataset, 'Results/sched.png')
 
     # independence test methods for Pc or FCI
     method = 'mv_fisherz' #'fisherz'
