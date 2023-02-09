@@ -31,7 +31,8 @@ def main():
 
     print("translating dataset to 2d array for algo")
     # have a smaller dataset for testing purposes
-    smaller_dataset = dataset_with_classes[:,:30] #np.concatenate((dataset_with_classes[:,:100], dataset_with_classes[:,300:400]), axis=1)
+    smaller_dataset = dataset_with_classes[:,:] #np.concatenate((dataset_with_classes[:,:100], dataset_with_classes[:,300:400]), axis=1)
+    print("Amount of variables: ", len(dataset_with_classes[0]))
     # get the schedule
     sched_with_classes = smaller_dataset[0]
     # translate the TrainRideNodes to delays
@@ -50,8 +51,12 @@ def main():
     #createCGWithGES(delays_to_feed_to_algo, 'Results/6100_jan_nov_with_backg.png', 'local_score_BIC', column_names)
     #hill_climbing(delays_to_feed_to_algo, cg_sched.G, 'Results/6100_jan_nov_with_backg_HILL.png', column_names)
     #gg_lingam = createCGWithDirectLiNGAM(delays_to_feed_to_algo, 'Results/6100_jan_nov_with_backg_LINGAM.png', column_names, bk)
+
     fas_method = FAS_method(method, delays_to_feed_to_algo, 'Results/6100_jan_nov_with_backg_FAS.png', sched_with_classes, id_trn_name_dict, column_names, bk)
     gg_fas = fas_method.fas_with_background()
+
+    #createCGWithFCI(method, delays_to_feed_to_algo, 'Results/6100_jan_nov_with_backg_FCI.png', column_names, bk)
+
     # r = backwardGES(delays_to_feed_to_algo, cg_sched.G, column_names, 'Results/6100_jan_nov_with_backg_GES.png', 'local_score_marginal_general')
     # print("GES score:", r['score'])
     # print("FAS score:", getScore(delays_to_feed_to_algo, gg_fas))

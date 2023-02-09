@@ -14,6 +14,7 @@ from TrainRideNode import TrainRideNode
 from FastBackgroundKnowledge import FastBackgroundKnowledge
 from causallearn.utils.Fas import fas
 from causallearn.utils.PCUtils.BackgroundKnowledge import BackgroundKnowledge
+from causallearn.search.ConstraintBased.FCI import rule0, SepsetsPossibleDsep
 import datetime
 
 class FAS_method():
@@ -25,10 +26,12 @@ class FAS_method():
         self.mapper_dict = mapper_dict
         self.column_names = column_names
         self.bk = bk
+        self.alpha = 0.05
+
 
     def startupFAS(self):
         depth = -1
-        alpha = 0.05
+
         if self.data.shape[0] < self.data.shape[1]:
             warnings.warn("The number of features is much larger than the sample size!")
 
@@ -41,13 +44,20 @@ class FAS_method():
 
         nodes = []
         for i in range(self.data.shape[1]):
-            node = GraphNode(f"X{i + 1}")
+            node_alias = f"X{i + 1}"
+            node_name = self.mapper_dict[node_alias]
+            node = GraphNode(node_alias)
             node.add_attribute("id", i)
+            #trn = self.id_trn_dict[node_name]
+            #node.add_attribute("trainnumber", trn.getTrainRideNumber())
+            #node.add_attribute("time", trn.getPlannedTime())
             nodes.append(node)
 
-        graph, sep_sets = fas(self.data, nodes, independence_test_method=independence_test_method, alpha=alpha,
+        graph, sep_sets = fas(self.data, nodes, independence_test_method=independence_test_method, alpha=self.alpha,
                               knowledge=self.bk, depth=depth, verbose=False)
-        return graph
+        # using fas will delete all attributes of the node, hence override the nodes with the one with the attributes
+        #graph.nodes = nodes
+        return graph, sep_sets
 
     def createIDTRNDict(self, sched_with_classes : np.array) -> Dict[str, TrainRideNode]:
         result_dict = {}
@@ -83,16 +93,57 @@ class FAS_method():
                 ggFas.add_directed_edge(node1, node2)
         return ggFas
 
+    def removePossibleDsep(self, ggFas, sep_sets):
+        sp = SepsetsPossibleDsep(self.data, ggFas, self.method, self.alpha, self.bk, -1,
+                                 -1, verbose= False)
+        waiting_to_deleted_edges = []
+
+        for edge in ggFas.get_graph_edges():
+            node_x = edge.get_node1()
+            node_y = edge.get_node2()
+
+            sep_set = sp.get_sep_set(node_x, node_y)
+
+            if sep_set is not None:
+                waiting_to_deleted_edges.append((node_x, node_y, sep_set))
+
+        for waiting_to_deleted_edge in waiting_to_deleted_edges:
+            dedge_node_x, dedge_node_y, dedge_sep_set = waiting_to_deleted_edge
+            ggFas.remove_edge(ggFas.get_edge(dedge_node_x, dedge_node_y))
+            sep_sets[(ggFas.node_map[dedge_node_x], ggFas.node_map[dedge_node_y])] = dedge_sep_set
+
     def fas_with_background(self) -> GeneralGraph:
         with_or_without = "with" if self.bk != None else "without"
         print("start with FAS " + with_or_without + " background")
         start = time.time()
-        gg_fas = self.startupFAS()
+        gg_fas, sep_sets = self.startupFAS()
         end = time.time()
         print("FAS:", "it took", end - start, "seconds")
         self.orientEdges(gg_fas)
         end = time.time()
         print("creating SCM of FAS " + with_or_without + " background is done, it took", end - start, "seconds")
+
+        pdy = GraphUtils.to_pydot(gg_fas, labels=self.column_names)
+        pdy.write_png(self.filename)
+        return gg_fas
+
+    def fci_altered(self):
+        with_or_without = "with" if self.bk != None else "without"
+        print("start with FCI " + with_or_without + " background")
+        start = time.time()
+        gg_fas, sep_sets = self.startupFAS()
+        end = time.time()
+        print("FAS:", "it took", end - start, "seconds")
+
+        rule0(gg_fas, gg_fas.get_nodes(), sep_sets, self.bk, verbose=False)
+
+        #removeByPossibleDsep(gg_fas, self.method, self.alpha, sep_sets)
+        self.removePossibleDsep(gg_fas, sep_sets)
+
+        self.orientEdges(gg_fas)
+
+        end = time.time()
+        print("creating SCM of FCI " + with_or_without + " background is done, it took", end - start, "seconds")
 
         pdy = GraphUtils.to_pydot(gg_fas, labels=self.column_names)
         pdy.write_png(self.filename)
