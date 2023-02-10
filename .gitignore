@@ -6,3 +6,4 @@
 *.pub
 new_ssh
 *.png
+*.pyc

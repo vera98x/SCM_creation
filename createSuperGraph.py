@@ -2,18 +2,15 @@
 from causallearn.utils.GraphUtils import GraphUtils
 from causallearn.utils.PCUtils.BackgroundKnowledge import BackgroundKnowledge
 from causallearn.graph.GraphNode import GraphNode
-from causallearn.graph.GeneralGraph import GeneralGraph
 from causallearn.graph.GraphClass import CausalGraph
 import numpy as np
-import time, datetime
+import time
 from enum import Enum
-from typing import Dict, Tuple
-from TrainRideNode import TrainRideNode
-from createBackground import variableNamesToNumber
+from typing import Tuple
+from OLD.createBackground import variableNamesToNumber
 from FastBackgroundKnowledge import FastBackgroundKnowledge
 
-from createBackground import backgroundToGraph, createStationDict, addRequiredBasedTrainSerie,addForbiddenBasedOnStation, \
-    addDependency, addForbiddenDependency, removeForbiddenDependency
+from OLD.createBackground import backgroundToGraph, createStationDict, addRequiredBasedTrainSerie, addDependency, addForbiddenDependency, removeForbiddenDependency
 
 class Graph_type(Enum):
     SUPER = 1
@@ -47,7 +44,7 @@ class DomainKnowledge:
         return bk
 
     def addRequiredBasedStation(self, bk: BackgroundKnowledge) -> FastBackgroundKnowledge:
-        buffer = 30  # minutes
+        buffer = 15  # minutes
         for station, station_list in self.station_dict.items():
             station_list.sort(key=lambda x: x[0])
             for station_index in range(len(station_list)):
