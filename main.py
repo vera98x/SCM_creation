@@ -1,15 +1,8 @@
-import numpy as np
-import datetime
-import time
-
-from createSCM import createCGWithPC, createCGWithFCI, createCGWithDirectLiNGAM, createCGWithGES
 from ETL_data_day import TRN_matrix_to_delay_matrix_columns_pair, dfToTrainRides
 from Load_transform_df import retrieveDataframe
-from createSuperGraph import get_CG_and_superGraph
-from createBackground import variableNamesToNumber
-from HillClimbing import hill_climbing
-from ScoreBasedMethod import backwardGES, getScore
-from FAS import FAS, createIDTRNDict
+from createSuperGraph import DomainKnowledge, Graph_type
+from OLD.createBackground import variableNamesToNumber
+from FAS import FAS_method
 
 def main():
     print("extracting file")
@@ -37,18 +30,18 @@ def main():
     delays_to_feed_to_algo, column_names = res_dict['delay_matrix'], res_dict['column_names']
 
     # create a background and its schedule (background for Pc or FCI, cg_sched for GES)
-    bk, cg_sched = get_CG_and_superGraph(sched_with_classes, 'Results/sched.png') #get_CG_and_background(smaller_dataset, 'Results/sched.png')
-
+    dk = DomainKnowledge(sched_with_classes, 'Results/sched.png', Graph_type.MINIMAL)
+    bk, cg_sched = dk.get_CG_and_superGraph()  # get_CG_and_background(smaller_dataset, 'Results/sched.png')
     # independence test methods for Pc or FCI
     method = 'mv_fisherz' #'fisherz'
     trn_name_id_dict, id_trn_name_dict = variableNamesToNumber(sched_with_classes)
     #create a Causal Graph
-    id_trn_dict = createIDTRNDict(sched_with_classes)
     #createCGWithGES(delays_to_feed_to_algo, 'Results/6100_jan_nov_with_backg.png', 'local_score_BIC', column_names)
     #hill_climbing(delays_to_feed_to_algo, cg_sched.G, 'Results/6100_jan_nov_with_backg_HILL.png', column_names)
     #gg_lingam = createCGWithDirectLiNGAM(delays_to_feed_to_algo, 'Results/6100_jan_nov_with_backg_LINGAM.png', column_names, bk)
-    gg_fas = FAS(method, delays_to_feed_to_algo, 'Results/6100_jan_nov_with_backg_FAS.png', id_trn_dict, id_trn_name_dict, column_names, bk)
-    # r = backwardGES(delays_to_feed_to_algo, cg_sched.G, column_names, 'Results/6100_jan_nov_with_backg_GES.png', 'local_score_marginal_general')
+    fas_method = FAS_method(method, delays_to_feed_to_algo, 'Results/6100_jan_nov_with_backg_FAS.png',
+                            sched_with_classes, id_trn_name_dict, column_names, bk)
+    gg_fas = fas_method.fas_with_background()# r = backwardGES(delays_to_feed_to_algo, cg_sched.G, column_names, 'Results/6100_jan_nov_with_backg_GES.png', 'local_score_marginal_general')
     # print("GES score:", r['score'])
     # print("FAS score:", getScore(delays_to_feed_to_algo, gg_fas))
     # print("Background score:", getScore(delays_to_feed_to_algo, cg_sched.G))
