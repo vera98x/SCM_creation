@@ -1,7 +1,10 @@
+import copy
+
 import numpy as np
 import pandas as pd
-import datetime
-from typing import List
+from datetime import datetime
+from typing import List, Tuple
+import math
 
 def keepTrainseries(df_input : pd.DataFrame, act_val : List[str]) ->  pd.DataFrame:
     df_input = df_input[df_input['basic_treinnr_treinserie'].isin(act_val)]
@@ -41,12 +44,11 @@ def changeToD(df_complete : pd.DataFrame) ->  pd.DataFrame:
     df_res = df_res.reset_index(drop=True)
     return df_res
 
-def makeDataUniform(df : pd.DataFrame) ->  pd.DataFrame:
+def makeDataUniform(df : pd.DataFrame, sched : pd.DataFrame) ->  pd.DataFrame:
     gb = df.groupby(['date'])
     grouped_by_date = [gb.get_group(x) for x in gb.groups]
     # get first dataframe as example to compare from
-    example = grouped_by_date[0]
-    example_date = example.iloc[0]['date']
+    sched_date = sched.iloc[0]['date']
 
     df_new = pd.DataFrame(columns=df.columns)
 
@@ -56,22 +58,22 @@ def makeDataUniform(df : pd.DataFrame) ->  pd.DataFrame:
         day = grouped_by_date[day_index]
         day_date = day.iloc[0]['date']
 
-        diff = pd.concat([example, day]).drop_duplicates(subset=['basic|treinnr', 'basic|drp', 'basic|drp_act'],
+        diff = pd.concat([sched, day]).drop_duplicates(subset=['basic|treinnr', 'basic|drp', 'basic|drp_act'],
                                                          keep=False)
         # if a dataframe differs, print the data of the frame and show difference
         if (len(diff) != 0):
             #TODO: if length of dataframe is too small remove it anyway?
 
             # remove the extra activities
-            remove_extra_activities = diff[~(diff["date"] == example_date)]
+            remove_extra_activities = diff[~(diff["date"] == sched_date)]
             df_res = pd.concat([day, remove_extra_activities]).drop_duplicates(
                 subset=['basic|treinnr', 'basic|drp', 'date'],
                 keep=False)
 
             # add missing values
-            add_extra_activities = diff[(diff["date"] == example_date)]
+            add_extra_activities = diff[(diff["date"] == sched_date)]
             add_extra_activities['date'] = day_date
-            add_extra_activities['sorting_time'] = add_extra_activities['basic|plan']
+            add_extra_activities["sorting_time"] = add_extra_activities['basic|plan']
             #add_extra_activities['basic|uitvoer'] = np.nan
             #add_extra_activities['basic|plan'] = np.nan
 
@@ -89,7 +91,7 @@ def makeDataUniform(df : pd.DataFrame) ->  pd.DataFrame:
 
     return df_new
 
-def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: List[str]) -> pd.DataFrame:
+def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: List[str]) -> Tuple[pd.DataFrame, pd.DataFrame]:
     # split dataframes in column
     df = pd.read_csv(export_name, sep=";")
     df = df[
@@ -112,14 +114,6 @@ def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: L
 
     df = changeToD(df)
 
-    #group per trainserie and make uniform
-    #TODO: changed this
-    #gb = df.groupby(['basic_treinnr_treinserie'])
-    #trainserieList = [gb.get_group(x) for x in gb.groups]
-    #for trainserie_index in range(len(trainserieList)):
-        #trainserie = trainserieList[trainserie_index]
-        #trainserieList[trainserie_index] = makeDataUniform(trainserie)
-
     df = df[~df['date'].isnull()]
     if workdays == None:
         pass
@@ -128,7 +122,9 @@ def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: L
     elif not workdays:
         df = keepWeekendDays(df)
 
-    df = makeDataUniform(df)
+    sched = findSched(df)
+
+    df = makeDataUniform(df, sched)
 
     df = df.sort_values(by=['date', 'basic_treinnr_treinserie', "basic|treinnr", "basic|plan"])
     df = df.reset_index(drop=True)
@@ -140,11 +136,31 @@ def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: L
     df['delay'] = df['basic|uitvoer'] - df['basic|plan']
     df['delay'] = df['delay'].map(lambda x: int(x.total_seconds()))
 
-    #df['basic|spoor'].fillna(np.nan, inplace=True)
+    return df[['date', 'basic_treinnr_treinserie','basic|treinnr', 'basic|spoor', 'basic|drp', 'basic|drp_act','plan|time','uitvoer|time', 'delay']], sched
 
+def findSched(df):
+    #print(df)
+    df_sched = copy.deepcopy(df)
+    # TODO: only suitable for days with D
+    # get the amount of days
+    days_count = len(df_sched.groupby('date'))
+    # set treshold for amount of occurences
+    min_occ = math.ceil(days_count*0.5)
+    g = df_sched.groupby(['basic|treinnr', 'basic|drp', 'basic|drp_act'])
+    grouped_by_date = [g.get_group(x) for x in g.groups]
+    df_sched = g.filter(lambda x: len(x) >= min_occ).reset_index(drop=True)
+    #print("Removed variables: ", len(g.filter(lambda x: len(x) < min_occ).reset_index(drop=True)))
 
-
-
-
-    return df[['date', 'basic_treinnr_treinserie','basic|treinnr', 'basic|spoor', 'basic|drp', 'basic|drp_act','plan|time','uitvoer|time', 'delay']]
-
+    # now we have all items that have a higher occurrence than the threshold from all days
+    # since we want to have a schedule for one day, we keep all occurences once.
+    df_sched = df_sched.drop_duplicates(subset=['basic|treinnr', 'basic|drp', 'basic|drp_act'], keep='first').reset_index(drop=True)
+    print("after: ", len(df_sched))
+    # since the trainnumber can have multiple actions at a station, we check if there are no duplicate actions
+    print("duplicated actions", len(df_sched[df_sched.duplicated(['basic|treinnr', 'basic|drp'], keep=False)]))
+    timestamp = pd.to_datetime("01-01-2000", format='%d-%m-%Y')
+    df_sched = df_sched.assign(date=timestamp)
+    df_sched["delay"] = 0
+    df_sched= df_sched.sort_values(by=['basic_treinnr_treinserie', "basic|treinnr", "basic|uitvoer"]).reset_index(drop=True)
+    df_sched['plan|time'] = pd.to_datetime(df_sched['basic|plan']).dt.time
+    print("columns :", df_sched.columns)
+    return df_sched

@@ -15,12 +15,12 @@ def getAllGroupLengths(grouped_by_date : List[pd.DataFrame]) -> Dict[int, int]:
 def dfToTrainRides(df : pd.DataFrame) -> np.array:
     gb = df.groupby(['date'])
     grouped_by_date = [gb.get_group(x) for x in gb.groups]
-    print(getAllGroupLengths(grouped_by_date))
-    total_lengths = [len(x) for x in grouped_by_date]
-    most_common_length = max(set(total_lengths), key=total_lengths.count)
-    print()
-    uniform_data = list(filter(lambda item: len(item) == most_common_length, grouped_by_date))
-    data = uniform_data
+    # print(getAllGroupLengths(grouped_by_date))
+    # total_lengths = [len(x) for x in grouped_by_date]
+    # most_common_length = max(set(total_lengths), key=total_lengths.count)
+    # print()
+    # uniform_data = list(filter(lambda item: len(item) == most_common_length, grouped_by_date))
+    data = grouped_by_date
     data_len = len(data[0])
 
     dataset_with_classes = np.zeros((0, data_len))

@@ -83,14 +83,25 @@ class FAS_method():
             # map edges to TRN + get time
             trn1_time = node1.get_attribute('time')
             trn2_time = node2.get_attribute('time')
+
+            reverse = False
+            if (trn1_time.hour == 23 or trn2_time.hour == 23) and (trn1_time.hour == 0 or trn2_time.hour == 0):
+                reverse = True
+
             #order in timewise
             if trn1_time > trn2_time:
                 #add directed edge
-                ggFas.add_directed_edge(node2, node1)
+                if(reverse):
+                    ggFas.add_directed_edge(node1, node2)
+                else:
+                    ggFas.add_directed_edge(node2, node1)
 
             else:
                 # add directed edge
-                ggFas.add_directed_edge(node1, node2)
+                if (reverse):
+                    ggFas.add_directed_edge(node2, node1)
+                else:
+                    ggFas.add_directed_edge(node1, node2)
         return ggFas
 
     def removePossibleDsep(self, ggFas, sep_sets):

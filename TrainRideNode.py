@@ -1,7 +1,7 @@
-
+import datetime
 class TrainRideNode:
     def __init__(self, trainRideNumber: int, stationName: str, platformNumber: int, activity: str, delay: int,
-                 plannedTime):
+                 plannedTime : datetime.time):
         self.trainRideNumber = trainRideNumber
         self.stationName = stationName
         self.platformNumber = platformNumber
