@@ -1,0 +1,50 @@
+------------------------ activation: relu and relu
+run 1:
+True μ:  1
+Estimated μ:  1.0215347
+True σ:  0.375
+Estimated σ:  0.7614929
+
+run 2, learning_rate=1e-4, dense layers reduced to 2, size 20 and 15:
+True μ:  1
+Estimated μ:  0.99041665
+True σ:  0.375
+Estimated σ:  0.7282638
+
+run 3, learning_rate=1e-4, dense layers reduced to 1 with size 100:
+True μ:  1
+Estimated μ:  1.3549931
+True σ:  0.375
+Estimated σ:  1.3975141
+
+run 4, learning_rate=1e-4, dense layers replaced to 2 with size 100:
+True μ:  1
+Estimated μ:  1.377164
+True σ:  0.375
+Estimated σ:  1.4095178
+
+run 5, learning_rate=1e-4, dense layers replaced to 2 with size 10,15
+True μ:  1
+Estimated μ:  1.0289696
+True σ:  0.375
+Estimated σ:  0.90676
+
+run 6, learning_rate=1e-4, dense layers replaced to 2 with size 5, 15
+Estimated μ:  0.97952455
+True σ:  0.375
+Estimated σ:  0.75924927
+
+
+--------------------------------- sigmoid and relu
+run 7, learning_rate=1e-4, dense layers replaced to 2 with size 6, 5
+True μ:  1
+Estimated μ:  1.0517231
+True σ:  0.375
+Estimated σ:  0.78070885
+
+run 8, learning_rate=1e-4, dense layers replaced to 2 with size 20, 15
+True μ:  1
+Estimated μ:  1.0476378
+True σ:  0.375
+Estimated σ:  0.83612543
+

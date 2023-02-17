@@ -52,7 +52,7 @@ def makeDataUniform(df : pd.DataFrame, sched : pd.DataFrame) ->  pd.DataFrame:
 
     df_new = pd.DataFrame(columns=df.columns)
 
-    print("len(grouped_by_date): ", len(grouped_by_date))
+    print("amount of days", len(grouped_by_date))
     # loop through every other frame, compare the columns
     for day_index in range(len(grouped_by_date)):
         day = grouped_by_date[day_index]
@@ -139,7 +139,6 @@ def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: L
     return df[['date', 'basic_treinnr_treinserie','basic|treinnr', 'basic|spoor', 'basic|drp', 'basic|drp_act','plan|time','uitvoer|time', 'delay']], sched
 
 def findSched(df):
-    #print(df)
     df_sched = copy.deepcopy(df)
     # TODO: only suitable for days with D
     # get the amount of days
@@ -154,7 +153,7 @@ def findSched(df):
     # now we have all items that have a higher occurrence than the threshold from all days
     # since we want to have a schedule for one day, we keep all occurences once.
     df_sched = df_sched.drop_duplicates(subset=['basic|treinnr', 'basic|drp', 'basic|drp_act'], keep='first').reset_index(drop=True)
-    print("after: ", len(df_sched))
+    print("events per day: ", len(df_sched))
     # since the trainnumber can have multiple actions at a station, we check if there are no duplicate actions
     print("duplicated actions", len(df_sched[df_sched.duplicated(['basic|treinnr', 'basic|drp'], keep=False)]))
     timestamp = pd.to_datetime("01-01-2000", format='%d-%m-%Y')
@@ -162,5 +161,4 @@ def findSched(df):
     df_sched["delay"] = 0
     df_sched= df_sched.sort_values(by=['basic_treinnr_treinserie', "basic|treinnr", "basic|uitvoer"]).reset_index(drop=True)
     df_sched['plan|time'] = pd.to_datetime(df_sched['basic|plan']).dt.time
-    print("columns :", df_sched.columns)
     return df_sched
