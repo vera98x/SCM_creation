@@ -51,9 +51,8 @@ def main():
     trn_name_id_dict, id_trn_name_dict = variableNamesToNumber(sched_with_classes)
     #create a Causal Graph
     fas_method = FAS_method(method, delays_to_feed_to_algo, 'Results/6100_jan_nov_with_backg_FAS.png', sched_with_classes, id_trn_name_dict, column_names, bk)
-    print(delays_to_feed_to_algo)
-    gg_fas = fas_method.fas_with_background()
-    gg2txt(gg_fas, "6100_FAS2.txt", id_trn_name_dict)
+    #gg_fas = fas_method.fas_with_background()
+    #gg2txt(gg_fas, "6100_FAS2.txt", id_trn_name_dict)
     gg = txt2generalgraph("6100_FAS2.txt")
 
     events = [("Bl", "8100O"), ("Bl", "8100E"), ("Hgv", "8100O"), ("Hgv", "8100E"), ("Asn", "500O"),("Asn", "700O"), ("Asn", "8100O"), ("Mp", "500E"), ("Mp", "700E"), ("Mp", "8100E")]
@@ -69,7 +68,7 @@ def main():
         print(events[i])
         delays = list(filter(lambda x: x<=900 and x >= -300, data_sample))
         print(data_sample)
-        bins = math.ceil((max(delays) - min(delays)) / 60)
+        bins = math.ceil((max(delays) - min(delays)) / 60) * 3 #per 20 seconds one bin
         plt.hist(delays, bins=bins)
         plt.show()
 

@@ -11,8 +11,6 @@ class TrainRideNode:
         self.delay = delay
         self.plannedTime = plannedTime
 
-        print(self.delay)
-
     def __str__(self):
         return f'{self.trainRideNumber}_{self.stationName}_{self.platformNumber}_{self.activity}_{self.delay}'
 

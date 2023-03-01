@@ -2,13 +2,37 @@ import copy
 
 from causallearn.graph.GeneralGraph import GeneralGraph
 from FAS import FAS_method
+from enum import Enum
 from typing import Dict
+
+class Train_type(Enum):
+    SPR = 1
+    IC = 2
+
+class Station_type(Enum):
+    SMALL = 1
+    LARGE = 2
+
+class Weekday(Enum):
+    MONDAY = 1
+    TUESDAY = 2
+    WEDNESDAY = 3
+    THURSDAY = 4
+    FRIDAY = 5
+
+class Peak(Enum):
+    NONPEAK = 0
+    PEAK = 1
 
 class NN_delay_sample:
     def __init__(self, label, delays):
         self.label = label
         self.trn_delay = delays[0]
         self.dep_delay = delays[1:]
+        self.type_train = Train_type.SPR
+        self.type_station = Station_type.SMALL
+        self.day_of_the_week = Weekday.MONDAY
+        self.peakhour = Peak.NONPEAK
 
 
 class NN_sample:
@@ -113,6 +137,6 @@ class NN_samples:
     def filterPrimaryDelay(self):
         p_delays = []
         for event in self.list_of_delays:
-            if all(x == 0 for x in event.dep_delay):
+            if all(x <= 0 for x in event.dep_delay):
                 p_delays.append(event.trn_delay)
         return p_delays

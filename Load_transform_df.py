@@ -74,6 +74,7 @@ def makeDataUniform(df : pd.DataFrame, sched : pd.DataFrame) ->  pd.DataFrame:
             add_extra_activities = diff[(diff["date"] == sched_date)]
             add_extra_activities['date'] = day_date
             add_extra_activities["sorting_time"] = add_extra_activities['basic|plan']
+            # overlap the delays (if there are too many np.nan, the mv_fischer cannot handle it)
             add_extra_activities['basic|uitvoer'] = np.nan
             add_extra_activities['basic|plan'] = np.nan
 
