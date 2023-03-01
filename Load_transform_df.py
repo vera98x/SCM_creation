@@ -58,7 +58,7 @@ def makeDataUniform(df : pd.DataFrame, sched : pd.DataFrame) ->  pd.DataFrame:
         day = grouped_by_date[day_index]
         day_date = day.iloc[0]['date']
 
-        diff = pd.concat([sched, day]).drop_duplicates(subset=['basic|treinnr', 'basic|drp', 'basic|drp_act'],
+        diff = pd.concat([sched, day]).drop_duplicates(subset=['basic|treinnr', 'basic|drp', 'basic|drp_act', "global_plan"],
                                                          keep=False)
         # if a dataframe differs, print the data of the frame and show difference
         if (len(diff) != 0):
@@ -74,8 +74,8 @@ def makeDataUniform(df : pd.DataFrame, sched : pd.DataFrame) ->  pd.DataFrame:
             add_extra_activities = diff[(diff["date"] == sched_date)]
             add_extra_activities['date'] = day_date
             add_extra_activities["sorting_time"] = add_extra_activities['basic|plan']
-            #add_extra_activities['basic|uitvoer'] = np.nan
-            #add_extra_activities['basic|plan'] = np.nan
+            add_extra_activities['basic|uitvoer'] = np.nan
+            add_extra_activities['basic|plan'] = np.nan
 
             # TODO: when creating the dataset, remove the basic plan and basic uitvoer
             df_res['sorting_time'] = df_res['basic|plan']
@@ -91,6 +91,12 @@ def makeDataUniform(df : pd.DataFrame, sched : pd.DataFrame) ->  pd.DataFrame:
 
     return df_new
 
+def toSeconds(x : datetime.time):
+    try:
+        return x.total_seconds()
+    except:
+        return np.nan
+
 def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: List[str]) -> Tuple[pd.DataFrame, pd.DataFrame]:
     # split dataframes in column
     df = pd.read_csv(export_name, sep=";")
@@ -103,8 +109,10 @@ def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: L
     #df['basic|spoor'] = df['basic|spoor'].astype('string')
     df['basic|treinnr'] = df['basic|treinnr'].astype('string')
     df['basic|drp_act'] = df['basic|drp_act'].astype('string')
-    df['basic|plan'] = pd.to_datetime(df['basic|plan'], format='%d-%m-%Y %H:%M')
-    df['basic|uitvoer'] = pd.to_datetime(df['basic|uitvoer'], format='%d-%m-%Y %H:%M')
+    df['basic|plan'] = pd.to_datetime(df['basic|plan'], format='%Y-%m-%d %H:%M:%S')
+    df['basic|uitvoer'] = pd.to_datetime(df['basic|uitvoer'], format='%Y-%m-%d %H:%M:%S')
+    df["global_plan"] = df['basic|plan'].dt.floor('Min')
+    df["global_plan"] = df["global_plan"].dt.time
 
     df['basic|uitvoer'] = df['basic|uitvoer'].fillna(df['basic|plan'])
     df['date'] = pd.to_datetime(df['basic|plan']).dt.date
@@ -134,20 +142,23 @@ def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: L
     df['uitvoer|time'] = pd.to_datetime(df['basic|uitvoer']).dt.time
 
     df['delay'] = df['basic|uitvoer'] - df['basic|plan']
-    df['delay'] = df['delay'].map(lambda x: int(x.total_seconds()))
+    df['delay'] = df['delay'].map(toSeconds)
 
-    return df[['date', 'basic_treinnr_treinserie','basic|treinnr', 'basic|spoor', 'basic|drp', 'basic|drp_act','plan|time','uitvoer|time', 'delay']], sched
+    return df[['date', 'basic_treinnr_treinserie','basic|treinnr', 'basic|spoor', 'basic|drp', 'basic|drp_act', "global_plan", 'delay']], sched
 
 def findSched(df):
     df_sched = copy.deepcopy(df)
+
     # TODO: only suitable for days with D
     # get the amount of days
     days_count = len(df_sched.groupby('date'))
+    print(days_count)
     # set treshold for amount of occurences
     min_occ = math.ceil(days_count*0.5)
-    g = df_sched.groupby(['basic|treinnr', 'basic|drp', 'basic|drp_act'])
-    grouped_by_date = [g.get_group(x) for x in g.groups]
+    g = df_sched.groupby(['basic|treinnr', 'basic|drp', 'basic|drp_act', "global_plan"])
+    print(g.count())
     df_sched = g.filter(lambda x: len(x) >= min_occ).reset_index(drop=True)
+    print(df_sched)
     #print("Removed variables: ", len(g.filter(lambda x: len(x) < min_occ).reset_index(drop=True)))
 
     # now we have all items that have a higher occurrence than the threshold from all days
@@ -161,4 +172,7 @@ def findSched(df):
     df_sched["delay"] = 0
     df_sched= df_sched.sort_values(by=['basic_treinnr_treinserie', "basic|treinnr", "basic|uitvoer"]).reset_index(drop=True)
     df_sched['plan|time'] = pd.to_datetime(df_sched['basic|plan']).dt.time
+
+    print(df_sched)
+
     return df_sched

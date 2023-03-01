@@ -1,13 +1,17 @@
 import datetime
+import numpy as np
 class TrainRideNode:
-    def __init__(self, trainRideNumber: int, stationName: str, platformNumber: int, activity: str, delay: int,
+    def __init__(self, trainSerie : str, trainRideNumber: int, stationName: str, platformNumber: int, activity: str, delay: int,
                  plannedTime : datetime.time):
+        self.trainSerie = trainSerie
         self.trainRideNumber = trainRideNumber
         self.stationName = stationName
         self.platformNumber = platformNumber
         self.activity = activity
         self.delay = delay
         self.plannedTime = plannedTime
+
+        print(self.delay)
 
     def __str__(self):
         return f'{self.trainRideNumber}_{self.stationName}_{self.platformNumber}_{self.activity}_{self.delay}'
@@ -19,10 +23,16 @@ class TrainRideNode:
         return (self.stationName == trn.stationName and self.platformNumber == trn.platformNumber)
 
     def getDelay(self) -> int:
-        return self.delay
+        try:
+            return int(self.delay)
+        except:
+            return np.nan
 
     def getTrainRideNumber(self):
         return self.trainRideNumber
+
+    def getTrainSerie(self):
+        return self.trainSerie
 
     def getStation(self):
         return self.stationName
@@ -35,6 +45,9 @@ class TrainRideNode:
 
     def getID(self):
         return f'{self.trainRideNumber}_{self.stationName}_{self.activity}_{self.getPlannedTimeStr()}'
+
+    def getSmallerID(self):
+        return f'{self.trainRideNumber}_{self.stationName}_{self.activity}'
 
     def getPlatform(self):
         return self.platformNumber

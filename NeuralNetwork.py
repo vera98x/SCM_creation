@@ -12,21 +12,6 @@ from tensorflow.keras.losses import SparseCategoricalCrossentropy, MeanSquaredEr
 from tensorflow.keras.optimizers import RMSprop
 import scipy.special as sps
 
-class NN_sample:
-    def __init__(self, label, prev_event = 0, prev_platform = 0, dep1 = 0, dep2 = 0):
-        self.label = label
-        self.prev_event = prev_event
-        self.prev_platform = prev_platform
-        self.dep1 = dep1
-        self.dep2 = dep2
-
-    def gg_to_nn_input(gg : GeneralGraph):
-        nodes = gg.get_nodes()
-
-        for node in nodes:
-            pass
-        return None
-
 def negative_log_like(y_true, y_pred):
     return -y_pred.log_prob(y_true)
 
@@ -38,12 +23,32 @@ def gamma_loss(y_true, y_pred):
 tfd = tfp.distributions
 tfpl = tfp.layers
 
-x = np.linspace(0, 10, 1000)[:, np.newaxis]
+
+
+my_file = open("Data/PrimaryDelays/Mp_8100E.txt", "r")
+content = my_file.read()
+my_file.close()
+c = content.replace('[', '').replace(']', '').replace('\n', '').replace(" ", "")
+c.split(",")
+y_temp = list(map(lambda x: float((int(x)/60)+0.01), c.split(",")))
+y_temp = [i for i in y_temp if i >= 0]
+y = tf.constant(y_temp)
+#y = np.array(list(map(lambda x: float(int(x)/60), c.split(","))))
+nr_samples = len(y)
+x = np.linspace(0, 10, nr_samples)[:, np.newaxis]
+#x = np.zeros(nr_samples)
+
 shape, scale = 2, 2
-y = tfd.Gamma(shape, scale).sample(1000)
+y1 = tfd.Gamma(shape, scale).sample(nr_samples)
 print(x.shape)
+print(x)
 print(y.shape)
-print(gamma_loss(100, 2).numpy())
+print(y)
+print(y1.shape)
+print(y1)
+
+#print(gamma_loss(100, 2).numpy())
+
 
 count, bins, ignored = plt.hist(y, 50, density=True)
 #plt.show()
@@ -66,8 +71,8 @@ count, bins, ignored = plt.hist(y, 50, density=True)
 # )
 
 def model_builder(hp):
-    hp_concentration = hp.Choice("hp_concentration", values=[1, 2,3,4])
-    hp_rate = hp.Choice("hp_rate", values=[1, 2,3,4])
+    hp_concentration = hp.Choice("hp_concentration", values=list(np.arange(0.1, 5, 0.1)))
+    hp_rate = hp.Choice("hp_rate", values=list(np.arange(0.1, 5, 0.1)))
 
     model = tf.keras.Sequential()
     model.add(tfp.layers.DistributionLambda(
@@ -83,8 +88,9 @@ def model_builder(hp):
 
 tuner = kt.Hyperband(model_builder,
                      objective='val_loss',
-                     max_epochs=10,
+                     max_epochs=50,
                      factor=3,
+                     seed = 42,
                      directory=None,
                      project_name=None)
 
@@ -115,11 +121,17 @@ hypermodel = tuner.hypermodel.build(best_hps)
 hypermodel.fit(x, y, epochs=best_epoch, validation_split=0.2)
 
 y_model = hypermodel(x)
-y_sample = y_model.sample(1000)
+y_sample = y_model.sample(nr_samples)
 y_hat = y_model.mean()
 y_sd = y_model.stddev()
 y_hat_m2sd = y_hat -2 * y_sd
 y_hat_p2sd = y_hat + 2*y_sd
+
+print(f"""
+The hyperparameter search is complete. The optimal number of units in the first densely-connected
+layer is ...., and the optimal learning rate for the optimizer
+is {best_hps.get('hp_concentration')}, {best_hps.get('hp_rate')}.
+""")
 
 print("True μ: ", y.numpy().mean())
 print("Estimated μ: ", y_hat.numpy().mean())
@@ -134,8 +146,8 @@ ax1.scatter(x, y, alpha=0.4, label='data')
 ax1.scatter(x, y_sample, alpha=0.4, color='red', label='model sample')
 ax1.legend()
 ax2.scatter(x, y, alpha=0.4, label='data')
-ax2.plot(x, [y_hat]*1000, color='red', alpha=0.8, label='model $\mu$')
-ax2.plot(x, [y_hat_m2sd]*1000, color='green', alpha=0.8, label='model $\mu \pm 2 \sigma$')
-ax2.plot(x, [y_hat_p2sd]*1000, color='green', alpha=0.8)
+ax2.plot(x, [y_hat]*nr_samples, color='red', alpha=0.8, label='model $\mu$')
+ax2.plot(x, [y_hat_m2sd]*nr_samples, color='green', alpha=0.8, label='model $\mu \pm 2 \sigma$')
+ax2.plot(x, [y_hat_p2sd]*nr_samples, color='green', alpha=0.8)
 ax2.legend()
 plt.show()

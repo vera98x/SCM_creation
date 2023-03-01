@@ -1,9 +1,11 @@
+
 from ETL_data_day import TRN_matrix_to_delay_matrix_columns_pair, dfToTrainRides
 from Load_transform_df import retrieveDataframe
 from createSuperGraph import DomainKnowledge, Graph_type
 from OLD.createBackground import variableNamesToNumber
 from causallearn.utils.TXT2GeneralGraph import txt2generalgraph
 from FAS import FAS_method
+import numpy as np
 from Utils import gg2txt
 
 def main():
@@ -34,8 +36,9 @@ def main():
     # get the schedule
 
     # translate the TrainRideNodes to delays
+    column_names = np.array(list(map(lambda x: x.getID(), sched_with_classes)))
     res_dict = TRN_matrix_to_delay_matrix_columns_pair(smaller_dataset)
-    delays_to_feed_to_algo, column_names = res_dict['delay_matrix'], res_dict['column_names']
+    delays_to_feed_to_algo = res_dict['delay_matrix']#, res_dict['column_names']
 
     # create a background and its schedule (background for Pc or FCI, cg_sched for GES)
     dk = DomainKnowledge(sched_with_classes, 'Results/sched.png', Graph_type.MINIMAL)
@@ -50,7 +53,7 @@ def main():
     #hill_climbing(delays_to_feed_to_algo, cg_sched.G, 'Results/6100_jan_nov_with_backg_HILL.png', column_names)
     #gg_lingam = createCGWithDirectLiNGAM(delays_to_feed_to_algo, 'Results/6100_jan_nov_with_backg_LINGAM.png', column_names, bk)
 
-    #fas_method = FAS_method(method, delays_to_feed_to_algo, 'Results/6100_jan_nov_with_backg_FAS.png', sched_with_classes, id_trn_name_dict, column_names, bk)
+    fas_method = FAS_method(method, delays_to_feed_to_algo, 'Results/6100_jan_nov_with_backg_FAS.png', sched_with_classes, id_trn_name_dict, column_names, bk)
     #gg_fas = fas_method.fas_with_background()
     #gg2txt(gg_fas, "6100_FAS.txt", id_trn_name_dict)
     gg = txt2generalgraph("6100_FAS_def.txt")

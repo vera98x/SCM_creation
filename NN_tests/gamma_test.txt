@@ -48,3 +48,8 @@ Estimated μ:  1.0476378
 True σ:  0.375
 Estimated σ:  0.83612543
 
+run 9, learning_rate=1e-4, dense layers replaced to 2 with size 20, 2
+True μ:  1
+Estimated μ:  1.0
+True σ:  0.375
+Estimated σ:  1.2011224
