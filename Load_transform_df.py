@@ -98,6 +98,13 @@ def toSeconds(x : datetime.time):
     except:
         return np.nan
 
+def addbufferColumn(df):
+    df['buffer'] = (df['basic|plan'] - df['basic|plan'].shift(1)).map(lambda x: x.total_seconds())
+    df.loc[(df['basic|drp_act'] != 'V') & (df['basic|drp_act'] != 'K_V'), 'buffer'] = 0
+    df.loc[(df['basic|treinnr'] != df['basic|treinnr'].shift(1)) , 'buffer'] = 0
+    df['buffer'] = df.buffer.fillna(0)
+    return df
+
 def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: List[str]) -> Tuple[pd.DataFrame, pd.DataFrame]:
     # split dataframes in column
     df = pd.read_csv(export_name, sep=";")
@@ -120,7 +127,8 @@ def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: L
 
 
     df = keepTrainseries(df, list_of_trainseries)
-
+    df = df.sort_values(by=['date', 'basic_treinnr_treinserie', "basic|treinnr", "basic|plan"])
+    df = addbufferColumn(df)
     df = changeToD(df)
 
     df = df[~df['date'].isnull()]
@@ -130,6 +138,9 @@ def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: L
         df = keepWorkDays(df)
     elif not workdays:
         df = keepWeekendDays(df)
+
+    df = df.sort_values(by=['date', 'basic_treinnr_treinserie', "basic|treinnr", "basic|plan"])
+    df = df.reset_index(drop=True)
 
     sched = findSched(df)
 
@@ -145,7 +156,7 @@ def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: L
     df['delay'] = df['basic|uitvoer'] - df['basic|plan']
     df['delay'] = df['delay'].map(toSeconds)
 
-    return df[['date', 'basic_treinnr_treinserie','basic|treinnr', 'basic|spoor', 'basic|drp', 'basic|drp_act', "global_plan", 'delay']], sched
+    return df[['date', 'basic_treinnr_treinserie','basic|treinnr', 'basic|spoor', 'basic|drp', 'basic|drp_act', "global_plan", 'delay', "buffer"]], sched
 
 def findSched(df):
     df_sched = copy.deepcopy(df)
@@ -157,9 +168,7 @@ def findSched(df):
     # set treshold for amount of occurences
     min_occ = math.ceil(days_count*0.5)
     g = df_sched.groupby(['basic|treinnr', 'basic|drp', 'basic|drp_act', "global_plan"])
-    print(g.count())
     df_sched = g.filter(lambda x: len(x) >= min_occ).reset_index(drop=True)
-    print(df_sched)
     #print("Removed variables: ", len(g.filter(lambda x: len(x) < min_occ).reset_index(drop=True)))
 
     # now we have all items that have a higher occurrence than the threshold from all days

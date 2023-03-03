@@ -6,9 +6,11 @@ from OLD.createBackground import variableNamesToNumber
 from causallearn.utils.TXT2GeneralGraph import txt2generalgraph
 from FAS import FAS_method
 from graphToInput import NN_samples
+from NeuralNetwork import firstNN
 from Utils import gg2txt
 import math
 import numpy as np
+import pandas as pd
 
 def main():
     print("extracting file")
@@ -57,20 +59,38 @@ def main():
 
     events = [("Bl", "8100O"), ("Bl", "8100E"), ("Hgv", "8100O"), ("Hgv", "8100E"), ("Asn", "500O"),("Asn", "700O"), ("Asn", "8100O"), ("Mp", "500E"), ("Mp", "700E"), ("Mp", "8100E")]
     data_collection = []
-    for event in events:
-        sample_changer = NN_samples(gg, fas_method, df)
-        sample_changer.gg_to_nn_input(*event)
-        sample_changer.findDelaysFromData()
-        data = sample_changer.filterPrimaryDelay()
-        data_collection.append(data)
+    #for event in events:
+    sample_changer = NN_samples(gg, fas_method, df)
+    sample_changer.gg_to_nn_input(events) #*event
+    sample_changer.findDelaysFromData()
+    #data = sample_changer.filterPrimaryDelay()
+    #data_collection.append(data)
+    x, y = sample_changer.NN_delay_sample_to_matrix()
+    print(x)
+    print(y)
+    #firstNN(x,y)
 
-    for i, data_sample in enumerate(data_collection):
-        print(events[i])
-        delays = list(filter(lambda x: x<=900 and x >= -300, data_sample))
-        print(data_sample)
-        bins = math.ceil((max(delays) - min(delays)) / 60) * 3 #per 20 seconds one bin
-        plt.hist(delays, bins=bins)
-        plt.show()
+    # for i, data_sample in enumerate(data_collection):
+    #     print(events[i])
+    #     delays = list(filter(lambda x: x<=900 and x >= -300, data_sample))
+    #     print(data_sample)
+    #     bins = math.ceil((max(delays) - min(delays)) / 60) * 3 #per 20 seconds one bin
+    #     plt.hist(delays, bins=bins)
+    #     plt.show()
 
+def main_nn():
+    df = pd.read_csv('Results/nn_input2.csv', sep = ";")
+    print(df)
+    df['prev_event'] = df['prev_event'].astype(float)
+    print(len(df))
+    df = df.dropna(subset=['delay'])
+    df = df.fillna(0)
+    print(len(df))
+    # remove outliers
+    
+    y = df["delay"].tolist()
+    x = df[df.columns[~df.columns.isin(["id",'delay'])]].values.tolist()
+    #print(x, y)
+    firstNN(x,y)
 
 main()

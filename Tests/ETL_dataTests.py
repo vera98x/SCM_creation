@@ -5,17 +5,18 @@ import math
 
 
 def createTestSample():
-    d = {'basic|uitvoer': ["1-3-2019 05:26:01", "1-3-2019 05:27:00", "1-3-2019 05:36:00","2-3-2019  05:26:01"],
-         'delay': [0,1,2,1],
-         'basic|drp_act': ["V", "D", "A","D"],
-         'basic|drp': ["Bkl", "Ma", "Utzl","Bkl"],
-         'basic_treinnr_treinserie': ["600E","500E","500E","600E"],
-         'basic|treinnr': ["501","501","501","501"]}
+    d = {'basic|uitvoer': ["1-3-2019 05:24:01", "1-3-2019 05:26:01", "1-3-2019 05:27:00", "1-3-2019 05:36:00","2-3-2019  05:26:01"],
+         #'delay': [0,1,2,1],
+         'basic|drp_act': ["A", "V", "K_A", "K_V","D"],
+         #'basic|drp': ["Bkl", "Ma", "Utzl","Bkl"],
+         #'basic_treinnr_treinserie': ["600E","500E","500E","600E"],
+         'basic|treinnr': ["502", "502","501","501","501"]}
     df = pd.DataFrame(data=d)
 
-    df['basic|uitvoer'] = pd.to_datetime(df['basic|uitvoer'], format='%m-%d-%Y %H:%M:%S')
-    df['basic|plan'] = df['basic|uitvoer']
-    df['date'] = pd.to_datetime(df['basic|uitvoer']).dt.date
+    df['basic|uitvoer'] = pd.to_datetime(df['basic|uitvoer'], format='%d-%m-%Y %H:%M:%S')
+    #df['basic|plan'] = df['basic|uitvoer']
+    #df['date'] = pd.to_datetime(df['basic|uitvoer']).dt.date
+
     return df
 
 def createTestSample_minimal():
@@ -122,5 +123,12 @@ def findSched(df):
     df= df.sort_values(by=['basic_treinnr_treinserie', "basic|treinnr", "basic|uitvoer"]).reset_index(drop=True)
     return df
 
-findSched(getRealData())
+def addbufferColumn(df):
+    df['buffer'] = (df['basic|uitvoer'] - df['basic|uitvoer'].shift(1)).map(lambda x: x.total_seconds())
+    df.loc[(df['basic|drp_act'] != 'V') & (df['basic|drp_act'] != 'K_V'), 'buffer'] = 0
+    df.loc[(df['basic|treinnr'] != df['basic|treinnr'].shift(1)) , 'buffer'] = 0
+    df['buffer'] = df.buffer.fillna(0)
+    return df
+
+print(addbufferColumn(createTestSample()))
 

@@ -4,6 +4,8 @@ from causallearn.graph.GeneralGraph import GeneralGraph
 from FAS import FAS_method
 from enum import Enum
 from typing import Dict
+import numpy as np
+import pandas as pd
 
 class Train_type(Enum):
     SPR = 1
@@ -11,7 +13,8 @@ class Train_type(Enum):
 
 class Station_type(Enum):
     SMALL = 1
-    LARGE = 2
+    MEDIUM = 2
+    LARGE = 3
 
 class Weekday(Enum):
     MONDAY = 1
@@ -25,7 +28,7 @@ class Peak(Enum):
     PEAK = 1
 
 class NN_delay_sample:
-    def __init__(self, label, delays):
+    def __init__(self, label, delays, buffer):
         self.label = label
         self.trn_delay = delays[0]
         self.dep_delay = delays[1:]
@@ -33,6 +36,7 @@ class NN_delay_sample:
         self.type_station = Station_type.SMALL
         self.day_of_the_week = Weekday.MONDAY
         self.peakhour = Peak.NONPEAK
+        self.buffer = buffer
 
 
 class NN_sample:
@@ -62,17 +66,18 @@ class NN_samples:
         self.df = df
         self.list_of_delays = []
 
-    def gg_to_nn_input(self, filtered_station, filtered_serie):
+    def gg_to_nn_input(self, events):
         nodes = self.gg.get_nodes()
-        print(filtered_serie, filtered_station)
         for node in nodes:
             trn = self.id_trn[node.get_name()]
             samp = NN_sample(trn)
             parents = self.gg.get_parents(node)
             print("-------------------------------")
             print(trn.getID())
-            if(trn.getTrainSerie() != filtered_serie or trn.getStation() != filtered_station):
+            # only use the stations we know all dependencies from
+            if((trn.getStation(), trn.getTrainSerie()) not in events):
                 continue
+            print("continue with", (trn.getStation(), trn.getTrainSerie()))
             for parent in parents:
                 p_trn = self.id_trn[parent.get_name()]
                 if (trn.getPlatform() == p_trn.getPlatform() and trn.getStation() == p_trn.getStation()):
@@ -132,7 +137,20 @@ class NN_samples:
             df_filter = df_filter[column_order]
 
             for row in df_filter.values:
-                self.list_of_delays.append(NN_delay_sample(sample.trn.getSmallerID(), row))
+                self.list_of_delays.append(NN_delay_sample(sample.trn.getSmallerID(), row, sample.trn.getBuffer()))
+
+    def NN_delay_sample_to_matrix(self):
+        x = []
+        y = []
+        for item in self.list_of_delays:
+            row = [item.label, *item.dep_delay, item.type_train.value, item.type_station.value, item.day_of_the_week.value, item.peakhour.value, item.buffer]
+            x.append(row)
+            y.append(item.trn_delay)
+
+        df = pd.DataFrame(x, columns=["id", "prev_event", "prev_platform", "dep1", "dep2", "dep3", "type_train", "type_station", "day_of_the_week", "peakhour", "buffer"])
+        df = df.assign(delay = y)
+        df.to_csv("Results/nn_input_filtered.csv", index = False, sep = ";")
+        return np.array(x), np.array(y)
 
     def filterPrimaryDelay(self):
         p_delays = []
