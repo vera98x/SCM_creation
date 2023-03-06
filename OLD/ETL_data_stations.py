@@ -4,7 +4,7 @@ import numpy as np
 from TrainRideNode import TrainRideNode
 from OLD.StationNode import StationNode
 from typing import List
-from Load_transform_df import retrieveDataframe
+from csv_to_df import retrieveDataframe
 
 # The values in the CSV file differ sometimes to here are global vlaues
 basic_treinnr = 'basic_treinnr' #'basic|treinnr'

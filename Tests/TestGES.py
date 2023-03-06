@@ -11,7 +11,7 @@ from causallearn.search.ScoreBased.GES import ges
 import numpy as np
 import time
 
-from ETL_data_day import TRN_matrix_to_delay_matrix_columns_pair
+from df_to_trn import TRN_matrix_to_delay_matrix_columns_pair
 from createSuperGraph import get_CG_and_superGraph
 def completeGES(data, filename, score_func: str = 'local_score_BIC'):
     r = ges(data, score_func)

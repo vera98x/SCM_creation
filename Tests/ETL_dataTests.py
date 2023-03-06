@@ -1,6 +1,6 @@
 import pandas as pd
 from typing import List
-from Load_transform_df import keepTrainseries, keepWorkDays, changeToD
+from csv_to_df import keepTrainseries, keepWorkDays, changeToD
 import math
 
 
@@ -8,9 +8,9 @@ def createTestSample():
     d = {'basic|uitvoer': ["1-3-2019 05:24:01", "1-3-2019 05:26:01", "1-3-2019 05:27:00", "1-3-2019 05:36:00","2-3-2019  05:26:01"],
          #'delay': [0,1,2,1],
          'basic|drp_act': ["A", "V", "K_A", "K_V","D"],
-         #'basic|drp': ["Bkl", "Ma", "Utzl","Bkl"],
+         'basic|drp': ["Bkl", "Bkl", "Ma","Ma", "Utzl"],
          #'basic_treinnr_treinserie': ["600E","500E","500E","600E"],
-         'basic|treinnr': ["502", "502","501","501","501"]}
+         'basic|treinnr': ["501", "501","501","501","501"]}
     df = pd.DataFrame(data=d)
 
     df['basic|uitvoer'] = pd.to_datetime(df['basic|uitvoer'], format='%d-%m-%Y %H:%M:%S')
@@ -125,7 +125,7 @@ def findSched(df):
 
 def addbufferColumn(df):
     df['buffer'] = (df['basic|uitvoer'] - df['basic|uitvoer'].shift(1)).map(lambda x: x.total_seconds())
-    df.loc[(df['basic|drp_act'] != 'V') & (df['basic|drp_act'] != 'K_V'), 'buffer'] = 0
+    df.loc[(df['basic|drp'] != df['basic|drp'].shift(1)) , 'buffer'] = 0
     df.loc[(df['basic|treinnr'] != df['basic|treinnr'].shift(1)) , 'buffer'] = 0
     df['buffer'] = df.buffer.fillna(0)
     return df

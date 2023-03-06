@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
-from ETL_data_day import TRN_matrix_to_delay_matrix_columns_pair, dfToTrainRides
-from Load_transform_df import retrieveDataframe
+from df_to_trn import TRN_matrix_to_delay_matrix_columns_pair, dfToTrainRides
+from csv_to_df import retrieveDataframe
 from createSuperGraph import DomainKnowledge, Graph_type
 from OLD.createBackground import variableNamesToNumber
 from causallearn.utils.TXT2GeneralGraph import txt2generalgraph
@@ -26,7 +26,7 @@ def main():
 
     # extract dataframe and impute missing values
     df, sched = retrieveDataframe(export_name, True, list_of_trainseries)
-    df.to_csv("Results/nn_input_inbetween.csv", index=False, sep=";")
+    df.to_csv("Results/df_done.csv", index=False, sep=";")
     print("done extracting", len(df))
     # change the dataframe to trainRideNodes
     dataset_with_classes = dfToTrainRides(df)
