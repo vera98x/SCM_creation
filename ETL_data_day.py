@@ -29,7 +29,7 @@ def dfToTrainRides(df : pd.DataFrame) -> np.array:
         dataset_day = np.zeros((0,))
         for index, trainride in day_df.iterrows():
             node = TrainRideNode(trainride['basic_treinnr_treinserie'], trainride['basic|treinnr'], trainride['basic|drp'], trainride['basic|spoor'],
-                                 trainride['basic|drp_act'], trainride['delay'], trainride["global_plan"], trainride["buffer"])
+                                 trainride['basic|drp_act'], trainride['delay'], trainride["global_plan"], trainride["buffer"], trainride["date"])
             dataset_day = np.append(dataset_day, node)
         dataset_with_classes = np.r_[dataset_with_classes, [dataset_day]]
     return dataset_with_classes

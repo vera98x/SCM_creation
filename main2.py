@@ -26,6 +26,7 @@ def main():
 
     # extract dataframe and impute missing values
     df, sched = retrieveDataframe(export_name, True, list_of_trainseries)
+    df.to_csv("Results/nn_input_inbetween.csv", index=False, sep=";")
     print("done extracting", len(df))
     # change the dataframe to trainRideNodes
     dataset_with_classes = dfToTrainRides(df)
@@ -59,15 +60,14 @@ def main():
 
     events = [("Bl", "8100O"), ("Bl", "8100E"), ("Hgv", "8100O"), ("Hgv", "8100E"), ("Asn", "500O"),("Asn", "700O"), ("Asn", "8100O"), ("Mp", "500E"), ("Mp", "700E"), ("Mp", "8100E")]
     data_collection = []
-    #for event in events:
     sample_changer = NN_samples(gg, fas_method, df)
-    sample_changer.gg_to_nn_input(events) #*event
+    sample_changer.gg_to_nn_input(events) #
     sample_changer.findDelaysFromData()
-    #data = sample_changer.filterPrimaryDelay()
-    #data_collection.append(data)
-    x, y = sample_changer.NN_delay_sample_to_matrix()
-    print(x)
-    print(y)
+        # data = sample_changer.filterPrimaryDelay()
+        # data_collection.append(data)
+    # x, y = sample_changer.NN_delay_sample_to_matrix()
+    # print(x)
+    # print(y)
     #firstNN(x,y)
 
     # for i, data_sample in enumerate(data_collection):
@@ -78,8 +78,25 @@ def main():
     #     plt.hist(delays, bins=bins)
     #     plt.show()
 
+def plots():
+    events = [("Bl", "8100O"), ("Bl", "8100E"), ("Hgv", "8100O"), ("Hgv", "8100E"), ("Asn", "500O"), ("Asn", "700O"),
+              ("Asn", "8100O"), ("Mp", "500E"), ("Mp", "700E"), ("Mp", "8100E")]
+    for event in events:
+        preamble = "Data/PrimaryDelays/missing_values_as_nan_filtered_on_timestamp/"
+        my_file = open(preamble + event[0] + "_" + event[1] + ".txt", "r")
+        content = my_file.read()
+        my_file.close()
+        c = content.replace('[', '').replace(']', '').replace('\n', '').replace(" ", "")
+        delays = list(map(lambda x: float(x), c.split(",")))
+        delays = list(filter(lambda x: x <= 900 and x >= -300, delays))
+        print(event)
+        bins = math.ceil((max(delays) - min(delays)) / 60) * 3 #per 20 seconds one bin
+        plt.hist(delays, bins=bins)
+        plt.show()
+
+
 def main_nn():
-    df = pd.read_csv('Results/nn_input2.csv', sep = ";")
+    df = pd.read_csv('Results/nn_input_final.csv', sep = ";")
     print(df)
     df['prev_event'] = df['prev_event'].astype(float)
     print(len(df))

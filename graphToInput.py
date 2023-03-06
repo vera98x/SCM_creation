@@ -1,5 +1,5 @@
 import copy
-
+from datetime import date, datetime, time
 from causallearn.graph.GeneralGraph import GeneralGraph
 from FAS import FAS_method
 from enum import Enum
@@ -28,16 +28,36 @@ class Peak(Enum):
     PEAK = 1
 
 class NN_delay_sample:
-    def __init__(self, label, delays, buffer):
-        self.label = label
-        self.trn_delay = delays[0]
-        self.dep_delay = delays[1:]
-        self.type_train = Train_type.SPR
-        self.type_station = Station_type.SMALL
-        self.day_of_the_week = Weekday.MONDAY
-        self.peakhour = Peak.NONPEAK
-        self.buffer = buffer
+    def __init__(self, trn, delays):
+        self.label = trn.getSmallerID()
+        self.date = delays[0]
+        self.trn_delay = delays[1]
+        self.dep_delay = delays[2:]
+        self.type_train = Train_type.SPR if(trn.getTrainSerie() == "8100E" or trn.getTrainSerie() == "8100O") else Train_type.IC
+        self.type_station = Station_type.MEDIUM if trn.getStation() == "Mp" else Station_type.SMALL
+        self.day_of_the_week = self.getDay(self.date)
+        self.peakhour = self.getPeak(trn.getPlannedTime())
+        self.buffer = trn.getBuffer()
 
+    def getDay(self, trn_date):
+        day = trn_date.weekday()
+        if day == 0:
+            return Weekday.MONDAY
+        if day == 1:
+            return Weekday.TUESDAY
+        if day == 2:
+            return Weekday.WEDNESDAY
+        if day == 3:
+            return Weekday.THURSDAY
+        else:
+            return Weekday.FRIDAY
+    def getPeak(self, t):
+        # note, this program only uses weekdays. In weekends it is always non-peak
+        interval_peak = [(time(6,30,0), time(9,0,0)), (time(16,00,0), time(18,00,0))]
+        for peak_int in interval_peak:
+            if t >= peak_int[0] and t < peak_int[1]:
+                return Peak.PEAK
+        return Peak.NONPEAK
 
 class NN_sample:
     def __init__(self, trn):
@@ -107,13 +127,15 @@ class NN_samples:
         for sample in self.sample_data:
             df_filter = self.df.copy()
             df_filter["event"] = df_filter.apply(lambda x: x['basic|treinnr']+"_"+x['basic|drp']+"_"+x['basic|drp_act'], axis=1)
+            # get the corresponding columns
             events = list(map(lambda x: x.getSmallerID(), sample.getListSample()))
             df_filter = df_filter[df_filter['event'].isin(events)]
             df_filter = df_filter[['event', "delay", "date"]]
             df_filter = df_filter.pivot(index='date', columns='event', values='delay')
-
+            df_filter = df_filter.reset_index()
             missing_columns = []
             column_order = []
+            column_order.append("date")
             column_order.append(sample.trn.getSmallerID())
             if sample.prev_event != None:
                 column_order.append(sample.prev_event.getSmallerID())
@@ -137,7 +159,7 @@ class NN_samples:
             df_filter = df_filter[column_order]
 
             for row in df_filter.values:
-                self.list_of_delays.append(NN_delay_sample(sample.trn.getSmallerID(), row, sample.trn.getBuffer()))
+                self.list_of_delays.append(NN_delay_sample(sample.trn, row))
 
     def NN_delay_sample_to_matrix(self):
         x = []
