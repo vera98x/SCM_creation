@@ -202,6 +202,6 @@ def findSched(df):
     timestamp = pd.to_datetime("01-01-2000", format='%d-%m-%Y')
     df_sched = df_sched.assign(date=timestamp)
     df_sched["delay"] = 0
-    df_sched= df_sched.sort_values(by=['basic_treinnr_treinserie', "basic|treinnr", "basic|uitvoer"]).reset_index(drop=True)
+    df_sched= df_sched.sort_values(by=['basic_treinnr_treinserie', "basic|treinnr", "basic|plan"]).reset_index(drop=True)
 
     return df_sched
