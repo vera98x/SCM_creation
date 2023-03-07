@@ -127,7 +127,6 @@ def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: L
     df = pd.read_csv(export_name, sep=";")
     df = df[
         ["nvgb_verkeersdatum", 'basic_treinnr_treinserie','basic|treinnr', 'basic|spoor', 'basic|drp', 'basic|drp_act', 'basic|plan', 'basic|uitvoer', 'vklvos_plan_actueel']]
-
     # set types of columns
     df['basic_treinnr_treinserie'] = df['basic_treinnr_treinserie'].astype('string')
     df['basic|drp'] = df['basic|drp'].astype('string')
@@ -144,7 +143,6 @@ def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: L
     df["global_plan"] = df["global_plan"].dt.time
     df['delay'] = df['basic|uitvoer'] - df['basic|plan']
     df['delay'] = df['delay'].map(toSeconds)
-
     # if the basic|uitvoer is empty, fill it with the value of basic|plan
     df['basic|uitvoer'] = df['basic|uitvoer'].fillna(df['basic|plan'])
     # rename column

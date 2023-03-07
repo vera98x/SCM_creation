@@ -1,5 +1,5 @@
 
-from df_to_trn import TRN_matrix_to_delay_matrix_columns_pair, dfToTrainRides
+from df_to_trn import TRN_matrix_to_delay_matrix, dfToTrainRides
 from csv_to_df import retrieveDataframe
 from createSuperGraph import DomainKnowledge, Graph_type
 from OLD.createBackground import variableNamesToNumber
@@ -37,8 +37,7 @@ def main():
 
     # translate the TrainRideNodes to delays
     column_names = np.array(list(map(lambda x: x.getID(), sched_with_classes)))
-    res_dict = TRN_matrix_to_delay_matrix_columns_pair(smaller_dataset)
-    delays_to_feed_to_algo = res_dict['delay_matrix']#, res_dict['column_names']
+    delays_to_feed_to_algo = TRN_matrix_to_delay_matrix(smaller_dataset)
 
     # create a background and its schedule (background for Pc or FCI, cg_sched for GES)
     dk = DomainKnowledge(sched_with_classes, 'Results/sched.png', Graph_type.MINIMAL)
