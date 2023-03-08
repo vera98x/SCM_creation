@@ -1,0 +1,5 @@
+Layer dense 20 sigmoid, random uniform
+layer dense 1 prelu, random uniform
+
+avg_miss = 24.57
+traveltime

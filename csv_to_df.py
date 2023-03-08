@@ -110,10 +110,27 @@ def addbufferColumn(df):
     df['buffer'] = (df['basic|plan'] - df['basic|plan'].shift(1)).map(lambda x: x.total_seconds())
     # if those events are not at the same station, fill with 0
     df.loc[(df['basic|drp'] != df['basic|drp'].shift(1)) , 'buffer'] = 0
-    # if those events are not bewteen the same train, fill with 0
+    # if those events are not between the same train, fill with 0
     df.loc[(df['basic|treinnr'] != df['basic|treinnr'].shift(1)) , 'buffer'] = 0
+    # if those events are not at the same date, fill with 0
+    df.loc[(df['date'] != df['date'].shift(1)), 'buffer'] = 0
     # for each event for which there was no 'upper' row to compare with, it is na, so also fill that with 0
     df['buffer'] = df.buffer.fillna(0)
+    return df
+
+def addTravelTimeColumn(df):
+    # Make sure that all activities are occuring once per location (aka make it D)
+    # sort the dataframe
+    df = df.sort_values(by=['date', 'basic_treinnr_treinserie', "basic|treinnr", "basic|plan"])
+    # take the current plan and the plan of the previous event and substract with buffer
+    df['traveltime'] = (df['basic|plan'] - df['basic|plan'].shift(1)).map(lambda x: x.total_seconds())
+    df['traveltime'] = df['traveltime'] - df['buffer']
+    # if those events are not between the same train, fill with 0
+    df.loc[(df['basic|treinnr'] != df['basic|treinnr'].shift(1)) , 'traveltime'] = 0
+    # if those events are not at the same date, fill with 0
+    df.loc[(df['date'] != df['date'].shift(1)), 'traveltime'] = 0
+    # for each event for which there was no 'upper' row to compare with, it is na, so also fill that with 0
+    df['traveltime'] = df.traveltime.fillna(0)
     return df
 
 def removeCancelledTrain(df):
@@ -154,6 +171,8 @@ def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: L
     df = addbufferColumn(df)
     # Remove all arrival events, keep the departure events and call it 'D'
     df = changeToD(df)
+    # add a traveltime column (important to have after changeToD())
+    df = addTravelTimeColumn(df)
     # only keep the dates that are known
     df = df[~df['date'].isnull()]
     # only keep working days
@@ -174,7 +193,7 @@ def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: L
     df = df.sort_values(by=['date', 'basic_treinnr_treinserie', "basic|treinnr", "basic|plan"])
     df = df.reset_index(drop=True)
 
-    return df[['date', 'basic_treinnr_treinserie','basic|treinnr', 'basic|spoor', 'basic|drp', 'basic|drp_act', "global_plan", 'delay', "buffer"]], sched
+    return df[['date', 'basic_treinnr_treinserie','basic|treinnr', 'basic|spoor', 'basic|drp', 'basic|drp_act', "global_plan", 'delay', "buffer", "traveltime"]], sched
 
 def findSched(df):
     df_sched = copy.deepcopy(df)

@@ -1,0 +1,5 @@
+Layer dense 40 sigmoid, random uniform
+layer dense 1 Prelu, input 20, random uniform
+
+agv_miss: 22.58
+traveltime added

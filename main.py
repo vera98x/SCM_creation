@@ -10,7 +10,7 @@ from Utils import gg2txt
 
 def main():
     print("extracting file")
-    export_name =  'Data/2019-03-01_2019-05-31.csv' #'Data/Ut_2022-01-01_2022-12-10_2.csv' #'Data/6100_jan_nov_2022_2.csv'
+    export_name =  'Data/2019-03-01_2019-05-31_original.csv' #'Data/Ut_2022-01-01_2022-12-10_2.csv' #'Data/6100_jan_nov_2022_2.csv'
     list_of_trainseries= ['500E', '500O', '600E', '600O', '700E','700O','1800E','1800O''6200E','6200O','8100E','8100O','9000E','9000O','12600E',
                            #'32200E''32200O','32300E','32300O',
                            '76200O','78100E','78100O','79000E','79000O'
@@ -53,7 +53,7 @@ def main():
     #gg_lingam = createCGWithDirectLiNGAM(delays_to_feed_to_algo, 'Results/6100_jan_nov_with_backg_LINGAM.png', column_names, bk)
 
     fas_method = FAS_method(method, delays_to_feed_to_algo, 'Results/6100_jan_nov_with_backg_FAS.png', sched_with_classes, id_trn_name_dict, column_names, bk)
-    #gg_fas = fas_method.fas_with_background()
+    gg_fas = fas_method.fas_with_background()
     #gg2txt(gg_fas, "6100_FAS.txt", id_trn_name_dict)
     gg = txt2generalgraph("6100_FAS_def.txt")
     #gg_to_nn_input(gg)

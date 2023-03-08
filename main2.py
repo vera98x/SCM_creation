@@ -5,7 +5,7 @@ from createSuperGraph import DomainKnowledge, Graph_type
 from OLD.createBackground import variableNamesToNumber
 from causallearn.utils.TXT2GeneralGraph import txt2generalgraph
 from FAS import FAS_method
-from graphToInput import NN_samples
+from graph_to_nn_input import NN_samples
 from NeuralNetwork import firstNN
 from Utils import gg2txt
 import math
@@ -15,9 +15,34 @@ import pandas as pd
 
 def main_test():
     df, sched = retrieveDataframe("Tests/df_test.csv", True, ["7400O"])
-    #df.to_csv("Results/df_done1.csv", index=False, sep=";")
-    trn_array = dfToTrainRides(df)
-    delays = TRN_matrix_to_delay_matrix(trn_array)
+    df.to_csv("Results/df_done1_travel_time.csv", index=False, sep=";")
+    trn_matrix = dfToTrainRides(df)
+    delay_matrix = TRN_matrix_to_delay_matrix(trn_matrix)
+
+    sched_with_classes = dfToTrainRides(sched)[0]
+    print("Amount of variables: ", len(trn_matrix[0]))
+    # get the schedule
+
+    # translate the TrainRideNodes to delays
+    column_names = np.array(list(map(lambda x: x.getID(), sched_with_classes)))
+
+    # create a background and its schedule (background for Pc or FCI, cg_sched for GES)
+    dk = DomainKnowledge(sched_with_classes, 'Results/sched.png', Graph_type.MINIMAL)
+    bk, cg_sched = dk.get_CG_and_superGraph()  # get_CG_and_background(smaller_dataset, 'Results/sched.png')
+
+    # independence test methods for Pc or FCI
+    method = 'mv_fisherz'  # 'fisherz'
+    trn_name_id_dict, id_trn_name_dict = variableNamesToNumber(sched_with_classes)
+    fas_method = FAS_method(method, delay_matrix, 'Results/6100_jan_nov_with_backg_FAS.png',
+                            sched_with_classes, id_trn_name_dict, column_names, bk)
+    gg_fas = cg_sched.G
+    #gg2txt(gg_fas, "test_FAS_def", id_trn_name_dict)
+    gg = txt2generalgraph("test_FAS_def.txt")
+    sample_changer = NN_samples(gg, fas_method, df)
+    events = [("Bkl", "7400O"), ("Ma", "7400O"), ("Utzl", "7400O")]
+    sample_changer.gg_to_nn_input(events)
+    sample_changer.findDelaysFromData()
+    sample_changer.NN_input_class_to_matrix()
 
 def main():
     print("extracting file")
@@ -33,43 +58,43 @@ def main():
 
     # extract dataframe and impute missing values
     df, sched = retrieveDataframe(export_name, True, list_of_trainseries)
-    df.to_csv("Results/df_done.csv", index=False, sep=";")
+    df.to_csv("Test4_trainserie/df_done.csv", index=False, sep=";")
     print("done extracting", len(df))
     # change the dataframe to trainRideNodes
-    dataset_with_classes = dfToTrainRides(df)
-    sched_with_classes = dfToTrainRides(sched)[0]
+    trn_matrix = dfToTrainRides(df)
+    trn_sched_matrix = dfToTrainRides(sched)[0]
+
     print("extracting file done")
 
     print("translating dataset to 2d array for algo")
-    # have a smaller dataset for testing purposes
-    smaller_dataset = dataset_with_classes[:,:] #np.concatenate((dataset_with_classes[:,:100], dataset_with_classes[:,300:400]), axis=1)
-    sched_with_classes = sched_with_classes[:]
-    print("Amount of variables: ", len(dataset_with_classes[0]))
-    # get the schedule
+    print("Amount of variables: ", len(trn_matrix[0]))
 
     # translate the TrainRideNodes to delays
-    column_names = np.array(list(map(lambda x: x.getID(), sched_with_classes)))
-    delays_to_feed_to_algo = TRN_matrix_to_delay_matrix(smaller_dataset)
+    column_names = np.array(list(map(lambda x: x.getID(), trn_sched_matrix)))
+    delays_to_feed_to_algo = TRN_matrix_to_delay_matrix(trn_matrix)
+    print(delays_to_feed_to_algo)
 
     # create a background and its schedule (background for Pc or FCI, cg_sched for GES)
-    dk = DomainKnowledge(sched_with_classes, 'Results/sched.png', Graph_type.MINIMAL)
+    dk = DomainKnowledge(trn_sched_matrix, 'Test4_trainserie/sched.png', Graph_type.MINIMAL)
     bk, cg_sched = dk.get_CG_and_superGraph() #get_CG_and_background(smaller_dataset, 'Results/sched.png')
 
     # independence test methods for Pc or FCI
     method = 'mv_fisherz' #'fisherz'
-    trn_name_id_dict, id_trn_name_dict = variableNamesToNumber(sched_with_classes)
+    trn_name_id_dict, id_trn_name_dict = variableNamesToNumber(trn_sched_matrix)
     #create a Causal Graph
-    fas_method = FAS_method(method, delays_to_feed_to_algo, 'Results/6100_jan_nov_with_backg_FAS.png', sched_with_classes, id_trn_name_dict, column_names, bk)
-    #gg_fas = fas_method.fas_with_background()
-    #gg2txt(gg_fas, "6100_FAS2.txt", id_trn_name_dict)
-    gg = txt2generalgraph("6100_FAS2.txt")
+    fas_method = FAS_method(method, delays_to_feed_to_algo, 'Test4_trainserie/6100_jan_nov_with_backg_FAS.png', trn_sched_matrix, id_trn_name_dict, column_names, bk)
+    gg_fas = fas_method.fas_with_background()
+    #gg2txt(gg_fas, "Test4_trainserie/6100_FAS.txt", id_trn_name_dict)
+    #gg = txt2generalgraph("Test4_trainserie/6100_FAS.txt")
 
-    events = [("Bl", "8100O"), ("Bl", "8100E"), ("Hgv", "8100O"), ("Hgv", "8100E"), ("Asn", "500O"),("Asn", "700O"), ("Asn", "8100O"), ("Mp", "500E"), ("Mp", "700E"), ("Mp", "8100E")]
-    data_collection = []
-    sample_changer = NN_samples(gg, fas_method, df)
-    sample_changer.gg_to_nn_input(events) #
-    sample_changer.findDelaysFromData()
-    sample_changer.NN_delay_sample_to_matrix()
+    # -----------------------
+    # events = [("Bl", "8100O"), ("Bl", "8100E"), ("Hgv", "8100O"), ("Hgv", "8100E"), ("Asn", "500O"),("Asn", "700O"), ("Asn", "8100O"), ("Mp", "500E"), ("Mp", "700E"), ("Mp", "8100E")]
+    # data_collection = []
+    # sample_changer = NN_samples(gg, fas_method, df)
+    # sample_changer.gg_to_nn_input(events) #
+    # sample_changer.findDelaysFromData()
+    # sample_changer.NN_input_class_to_matrix("Test4_trainserie/nn_input.csv")
+    #-----------------------
         # data = sample_changer.filterPrimaryDelay()
         # data_collection.append(data)
     # x, y = sample_changer.NN_delay_sample_to_matrix()
@@ -103,18 +128,21 @@ def plots():
 
 
 def main_nn():
-    df = pd.read_csv('Results/nn_input_final.csv', sep = ";")
-    print(df)
-    df['prev_event'] = df['prev_event'].astype(float)
+    df = pd.read_csv('Test4_trainserie/nn_input.csv', sep = ";")
+    #print(df)
+    #df['prev_event'] = df['prev_event'].astype(float)
     print(len(df))
+    # if the prev event or the delay is not known, remove it from the dataframe
     df = df.dropna(subset=['delay'])
+    df = df.dropna(subset=['prev_event'])
     df = df.fillna(0)
-    print(len(df))
     # remove outliers
-    
+    df = df.query('delay <= 1200 & delay >= -1200')
+    print(len(df))
     y = df["delay"].tolist()
-    x = df[df.columns[~df.columns.isin(["id",'delay'])]].values.tolist()
+    # add all columns except id and delay as input
+    x = df[df.columns[~df.columns.isin(["id",'delay', "traveltime"])]].values.tolist()
     #print(x, y)
-    firstNN(x,y)
+    firstNN(x,y,"Test4_trainserie/nn_output")
 
-main_test()
+main()

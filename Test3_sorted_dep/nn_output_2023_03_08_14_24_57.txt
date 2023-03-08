@@ -1,0 +1,9 @@
+layer dense 1 prelu, imput dim, random uniform
+
+avg_miss_train: 21.76
+loss_train: 1648
+avg_miss_test: 21.8
+loss_test: 1783
+within 15 sec:  0.563
+traveltime + sorted dependencies
+epochs = 80

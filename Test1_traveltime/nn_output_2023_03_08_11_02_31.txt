@@ -1,0 +1,11 @@
+Layer dense 300 tanh, random uniform
+Layer dense 300 sigmoid, 300, random uniform
+layer dense 1 prelu, imput 300, random uniform
+
+avg_miss_train: 21.04
+loss_train: 1559
+avg_miss_test: 22.08
+loss_test: 2056
+within 15 sec:  0.5514981273408239
+traveltime
+epochs = 80

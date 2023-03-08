@@ -1,0 +1,7 @@
+Layer dense 80 tanh, random uniform
+Layer dense 80 prelu, input input_dim, random uniform
+layer dense 1 prelu, imput 40, random uniform
+
+avg_miss_train: 22.92
+avg_miss_test: 23.73
+traveltime

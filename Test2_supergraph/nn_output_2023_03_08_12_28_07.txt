@@ -1,0 +1,10 @@
+Layer dense 300 tanh, random uniform
+layer dense 1 prelu, imput 300, random uniform
+
+avg_miss_train: 20.3
+loss_train: 1580
+avg_miss_test: 21.6
+loss_test: 1774
+within 15 sec:  0.578
+traveltime + supergraph
+epochs = 80

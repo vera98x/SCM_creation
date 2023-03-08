@@ -1,0 +1,2 @@
+Layer dense 20 sigmoid, random uniform
+layer dense 1 sigmoid, random uniform

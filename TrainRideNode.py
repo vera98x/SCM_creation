@@ -1,8 +1,8 @@
 import datetime
 import numpy as np
 class TrainRideNode:
-    def __init__(self, trainSerie : str, trainRideNumber: int, stationName: str, platformNumber: int, activity: str, delay: int,
-                 plannedTime : datetime.time, buffer : int, date : datetime.date):
+    def __init__(self, trainSerie : str, trainRideNumber: int, stationName: str, platformNumber: int, activity: str, delay: float,
+                 plannedTime : datetime.time, buffer : int, date : datetime.date, traveltime :float):
         self.trainSerie = trainSerie
         self.trainRideNumber = trainRideNumber
         self.stationName = stationName
@@ -12,6 +12,7 @@ class TrainRideNode:
         self.plannedTime = plannedTime
         self.buffer = buffer
         self.date = date
+        self.traveltime = traveltime
 
     def __str__(self):
         return f'{self.trainRideNumber}_{self.stationName}_{self.platformNumber}_{self.activity}_{self.delay}'
@@ -57,3 +58,6 @@ class TrainRideNode:
 
     def getDate(self):
         return self.date
+
+    def getTraveltime(self):
+        return self.traveltime
