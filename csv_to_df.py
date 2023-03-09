@@ -69,31 +69,33 @@ def makeDataUniform(df : pd.DataFrame, sched : pd.DataFrame) ->  pd.DataFrame:
             #TODO: if length of dataframe is too small remove it anyway?
 
             # remove the extra activities
+            # find activities that are not in the schedule
             remove_extra_activities = diff[~(diff["date"] == sched_date)]
+            # add those activities again to the day dataframe, and drop the duplicates
             df_res = pd.concat([day, remove_extra_activities]).drop_duplicates(
-                subset=['basic|treinnr', 'basic|drp', 'date'],
+                subset=['basic|treinnr', 'basic|drp', 'basic|drp_act', 'date'],
                 keep=False)
 
             # add missing values
             add_extra_activities = diff[(diff["date"] == sched_date)]
-            add_extra_activities['date'] = day_date
-            add_extra_activities["sorting_time"] = add_extra_activities['basic|plan']
+            add_extra_activities = add_extra_activities.assign(date=day_date)
+            add_extra_activities = add_extra_activities.assign(time = add_extra_activities["basic|plan"].dt.time)
+            add_extra_activities.loc[:, "basic|plan"] = pd.to_datetime(add_extra_activities.date.astype(str) + ' ' + add_extra_activities.time.astype(str))
+            add_extra_activities = add_extra_activities.drop(columns=["time"])
+
             # overlap the delays (if there are too many np.nan, the mv_fischer cannot handle it)
             add_extra_activities['basic|uitvoer'] = np.nan
-            add_extra_activities['basic|plan'] = np.nan
             add_extra_activities['delay'] = np.nan
 
-            # TODO: when creating the dataset, remove the basic plan and basic uitvoer
-            df_res['sorting_time'] = df_res['basic|plan']
-            df_res = pd.concat([df_res, add_extra_activities])
-            df_res = df_res.sort_values(by=['date', 'basic_treinnr_treinserie', "basic|treinnr", "sorting_time"])
-            # remove the sorting column
-            df_res = df_res.drop(columns=['sorting_time'])
-            df_res = df_res.reset_index(drop=True)
-
-            grouped_by_date[day_index] = df_res
-
-            df_new = pd.concat(grouped_by_date)
+            # Combine the datafrem for the day with the extra activities
+            df_r = pd.concat([df_res, add_extra_activities])
+            # sort them
+            df_r = df_r.sort_values(by=['date', 'basic_treinnr_treinserie', "basic|treinnr", 'basic|plan'])
+            df_r = df_r.reset_index(drop=True)
+            # add to the group again
+            grouped_by_date[day_index] = df_r
+    #create new datafame
+    df_new = pd.concat(grouped_by_date)
 
     return df_new
 
@@ -170,7 +172,7 @@ def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: L
     # add a buffer column
     df = addbufferColumn(df)
     # Remove all arrival events, keep the departure events and call it 'D'
-    df = changeToD(df)
+    #df = changeToD(df)
     # add a traveltime column (important to have after changeToD())
     df = addTravelTimeColumn(df)
     # only keep the dates that are known
@@ -193,7 +195,7 @@ def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: L
     df = df.sort_values(by=['date', 'basic_treinnr_treinserie', "basic|treinnr", "basic|plan"])
     df = df.reset_index(drop=True)
 
-    return df[['date', 'basic_treinnr_treinserie','basic|treinnr', 'basic|spoor', 'basic|drp', 'basic|drp_act', "global_plan", 'delay', "buffer", "traveltime"]], sched
+    return df[['date', 'basic_treinnr_treinserie','basic|treinnr', 'basic|spoor', 'basic|drp', 'basic|drp_act', "basic|plan" ,"global_plan", 'delay', "buffer", "traveltime"]], sched
 
 def findSched(df):
     df_sched = copy.deepcopy(df)
@@ -214,7 +216,7 @@ def findSched(df):
     df_sched = df_sched.drop_duplicates(subset=['basic|treinnr', 'basic|drp', 'basic|drp_act'], keep='first').reset_index(drop=True)
     print("events per day: ", len(df_sched))
     # since the trainnumber can have multiple actions at a station, we check if there are no duplicate actions
-    print("duplicated actions", len(df_sched[df_sched.duplicated(['basic|treinnr', 'basic|drp'], keep=False)]))
+    print("duplicated actions", len(df_sched[df_sched.duplicated(['basic|treinnr', 'basic|drp', 'basic|drp_act'], keep=False)]))
     # add a old timestamp to it, to recognise the schedule entries
     timestamp = pd.to_datetime("01-01-2000", format='%d-%m-%Y')
     df_sched = df_sched.assign(date=timestamp)

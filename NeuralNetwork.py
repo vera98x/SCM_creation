@@ -52,11 +52,11 @@ def firstNN(x_raw : List[List[float]], y_raw : List[float], filename : str):
     print(x_train.shape, y_train.shape)
     model = tf.keras.Sequential(
         [
-            # tf.keras.layers.Dense(
-            #     300, input_dim=input_dim, activation="tanh", kernel_initializer="random_uniform"
-            # ),
             tf.keras.layers.Dense(
-                1, input_dim = input_dim, activation="PReLU", kernel_initializer="random_uniform"
+                300, input_dim=input_dim, activation="tanh", kernel_initializer="random_uniform"
+            ),
+            tf.keras.layers.Dense(
+                1, input_dim = 300, activation="PReLU", kernel_initializer="random_uniform"
             ),
         ]
     )

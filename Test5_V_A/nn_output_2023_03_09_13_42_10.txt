@@ -1,0 +1,10 @@
+Layer dense 300 tanh, random uniform
+layer dense 1 prelu, 300, random uniform
+
+avg_miss_train: 25.5
+loss_train: 2754
+avg_miss_test: 25.6
+loss_test: 3459
+within 15 sec:  0.521
+traveltime + sorted + trainserie
+epochs = 80

@@ -51,7 +51,7 @@ class DomainKnowledge:
                 (time_trn, trn) = station_list[station_index]
                 for station2_index in range(station_index+1, len(station_list)):
                     (other_time_trn, other_trn) = station_list[station2_index]
-                    if ((other_time_trn.hour - time_trn.hour) * 60 + (other_time_trn.minute - time_trn.minute)) <= buffer:
+                    if abs((other_time_trn.hour - time_trn.hour) * 60 + (other_time_trn.minute - time_trn.minute)) <= buffer:
                         if(self.graph_type == Graph_type.SUPER):
                             bk = addDependency(trn.getID(), other_trn.getID(), bk, self.trn_name_id_dict)
                         if(self.graph_type == Graph_type.MINIMAL):

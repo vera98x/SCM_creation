@@ -37,7 +37,7 @@ class NN_input_sample:
         self.type_train = Train_type.SPR if(trn.getTrainSerie() == "8100E" or trn.getTrainSerie() == "8100O") else Train_type.IC
         self.type_station = Station_type.MEDIUM if trn.getStation() == "Mp" else Station_type.SMALL
         self.day_of_the_week = self.getDay(self.date)
-        self.peakhour = self.getPeak(trn.getPlannedTime())
+        self.peakhour = self.getPeak(trn.getPlannedTime_time())
         self.buffer = trn.getBuffer()
         self.traveltime = trn.getTraveltime()
         list_of_trainseries = ['500E', '500O', '600E', '600O', '700E', '700O', '1800E', '1800O''6200E', '6200O',

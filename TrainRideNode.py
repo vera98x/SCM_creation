@@ -1,14 +1,15 @@
 import datetime
 import numpy as np
 class TrainRideNode:
-    def __init__(self, trainSerie : str, trainRideNumber: int, stationName: str, platformNumber: int, activity: str, delay: float,
-                 plannedTime : datetime.time, buffer : int, date : datetime.date, traveltime :float):
+    def __init__(self, trainSerie : str, trainRideNumber: int, stationName: str, platformNumber: int, activity: str, delay: float, globalTime : datetime.time,
+                 plannedTime : datetime, buffer : int, date : datetime.date, traveltime :float):
         self.trainSerie = trainSerie
         self.trainRideNumber = trainRideNumber
         self.stationName = stationName
         self.platformNumber = platformNumber
         self.activity = activity
         self.delay = delay
+        self.globalTime = globalTime
         self.plannedTime = plannedTime
         self.buffer = buffer
         self.date = date
@@ -38,14 +39,17 @@ class TrainRideNode:
     def getStation(self):
         return self.stationName
 
-    def getPlannedTimeStr(self):
-        return str(self.plannedTime.hour) + ":" + str(self.plannedTime.minute) + ":" + str(self.plannedTime.second)
+    def getGlobalTimeStr(self):
+        return str(self.globalTime.hour) + ":" + str(self.globalTime.minute) + ":" + str(self.globalTime.second)
+
+    def getPlannedTime_time(self):
+        return self.plannedTime.time()
 
     def getPlannedTime(self):
         return self.plannedTime
 
     def getID(self):
-        return f'{self.trainRideNumber}_{self.stationName}_{self.activity}_{self.getPlannedTimeStr()}'
+        return f'{self.trainRideNumber}_{self.stationName}_{self.activity}_{self.getGlobalTimeStr()}'
 
     def getSmallerID(self):
         return f'{self.trainRideNumber}_{self.stationName}_{self.activity}'
