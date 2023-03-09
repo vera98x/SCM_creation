@@ -166,6 +166,9 @@ def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: L
     df['basic|uitvoer'] = df['basic|uitvoer'].fillna(df['basic|plan'])
     # rename column
     df['date'] = df['nvgb_verkeersdatum']
+    #todo replace this with real wissel data
+    df = df.assign(wissels = "MP$283$R,MP$281B$R,MP$281A$R,MP$271A$L,MP$269$L,MP$263A$R,MP$247$R,MP$243B$R,MP$241A$L")
+    df = df.assign(speed = 80)
 
     # only keep the desired train series
     df = keepTrainseries(df, list_of_trainseries)
@@ -195,7 +198,7 @@ def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: L
     df = df.sort_values(by=['date', 'basic_treinnr_treinserie', "basic|treinnr", "basic|plan"])
     df = df.reset_index(drop=True)
 
-    return df[['date', 'basic_treinnr_treinserie','basic|treinnr', 'basic|spoor', 'basic|drp', 'basic|drp_act', "basic|plan" ,"global_plan", 'delay', "buffer", "traveltime"]], sched
+    return df[['date', 'basic_treinnr_treinserie','basic|treinnr', 'basic|spoor', 'basic|drp', 'basic|drp_act', "basic|plan" ,"global_plan", 'delay', "buffer", "traveltime", "wissels", "speed"]], sched
 
 def findSched(df):
     df_sched = copy.deepcopy(df)

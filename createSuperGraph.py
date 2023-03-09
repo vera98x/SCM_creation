@@ -15,6 +15,7 @@ from OLD.createBackground import backgroundToGraph, createStationDict, addRequir
 class Graph_type(Enum):
     SUPER = 1
     MINIMAL = 2
+    SWITCHES = 3
 
 class DomainKnowledge:
     def __init__(self, sched_with_classes : np.array, filename: str, type : Graph_type):
@@ -54,6 +55,15 @@ class DomainKnowledge:
                     if abs((other_time_trn.hour - time_trn.hour) * 60 + (other_time_trn.minute - time_trn.minute)) <= buffer:
                         if(self.graph_type == Graph_type.SUPER):
                             bk = addDependency(trn.getID(), other_trn.getID(), bk, self.trn_name_id_dict)
+                        if (self.graph_type == Graph_type.SWITCHES):
+                            shared = any(x in trn.wissels for x in other_trn.wissels)
+                            if shared:
+                                bk = addDependency(trn.getID(), other_trn.getID(), bk, self.trn_name_id_dict)
+                            else:
+                                bk = removeForbiddenDependency(trn.getID(), other_trn.getID(), bk,
+                                                               self.trn_name_id_dict)
+                                bk = removeForbiddenDependency(other_trn.getID(), trn.getID(), bk,
+                                                               self.trn_name_id_dict)
                         if(self.graph_type == Graph_type.MINIMAL):
                             bk = removeForbiddenDependency(trn.getID(), other_trn.getID(), bk, self.trn_name_id_dict)
                             bk = removeForbiddenDependency(other_trn.getID(), trn.getID(), bk, self.trn_name_id_dict)

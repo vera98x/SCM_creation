@@ -14,8 +14,8 @@ import pandas as pd
 
 
 def main_test():
-    df, sched = retrieveDataframe("Test6_supergraph_V_A/df_test.csv", True, ["7400O"])
-    df.to_csv("Test6_supergraph_V_A/df_done_AV5.csv", index=False, sep=";")
+    df, sched = retrieveDataframe("Test7_switches/df_test.csv", True, ["7400O"])
+    df.to_csv("Test7_switches/df_done_AV5.csv", index=False, sep=";")
     trn_matrix = dfToTrainRides(df)
     # # translate the TrainRideNodes to delays
     delay_matrix = TRN_matrix_to_delay_matrix(trn_matrix)
@@ -25,7 +25,7 @@ def main_test():
     column_names = np.array(list(map(lambda x: x.getID(), sched_with_classes)))
 
     # create a background and its schedule (background for Pc or FCI, cg_sched for GES)
-    dk = DomainKnowledge(sched_with_classes, 'Test6_supergraph_V_A/sched.png', Graph_type.MINIMAL)
+    dk = DomainKnowledge(sched_with_classes, 'Test7_switches/sched.png', Graph_type.MINIMAL)
     bk, cg_sched = dk.get_CG_and_superGraph()  # get_CG_and_background(smaller_dataset, 'Results/sched.png')
     #
     # # independence test methods for Pc or FCI
@@ -56,7 +56,7 @@ def main(calculate_background : bool):
 
     # extract dataframe and impute missing values
     df, sched = retrieveDataframe(export_name, True, list_of_trainseries)
-    df.to_csv("Test6_supergraph_V_A/df_done.csv", index=False, sep=";")
+    df.to_csv("Test7_switches/df_done.csv", index=False, sep=";")
     print("done extracting", len(df))
     # change the dataframe to trainRideNodes
     trn_matrix = dfToTrainRides(df)
@@ -73,19 +73,19 @@ def main(calculate_background : bool):
     print(delays_to_feed_to_algo)
 
     # create a background and its schedule (background for Pc or FCI, cg_sched for GES)
-    dk = DomainKnowledge(trn_sched_matrix, 'Test6_supergraph_V_A/sched.png', Graph_type.SUPER)
+    dk = DomainKnowledge(trn_sched_matrix, 'Test7_switches/sched.png', Graph_type.SWITCHES)
     bk, cg_sched = dk.get_CG_and_superGraph() #get_CG_and_background(smaller_dataset, 'Results/sched.png')
 
     # independence test methods for Pc or FCI
     method = 'mv_fisherz' #'fisherz'
     trn_name_id_dict, id_trn_name_dict = variableNamesToNumber(trn_sched_matrix)
     #create a Causal Graph
-    fas_method = FAS_method(method, delays_to_feed_to_algo, 'Test6_supergraph_V_A/6100_jan_nov_with_backg_FAS.png', trn_sched_matrix, id_trn_name_dict, column_names, bk)
+    fas_method = FAS_method(method, delays_to_feed_to_algo, 'Test7_switches/6100_jan_nov_with_backg_FAS.png', trn_sched_matrix, id_trn_name_dict, column_names, bk)
     if(calculate_background):
         gg_fas = fas_method.fas_with_background()
-        gg2txt(gg_fas, "Test6_supergraph_V_A/6100_FAS.txt", id_trn_name_dict)
-    gg2txt(cg_sched.G, "Test6_supergraph_V_A/6100_FAS.txt", id_trn_name_dict)
-    gg = txt2generalgraph("Test6_supergraph_V_A/6100_FAS.txt")
+        gg2txt(gg_fas, "Test7_switches/6100_FAS.txt", id_trn_name_dict)
+    gg2txt(cg_sched.G, "Test7_switches/6100_FAS.txt", id_trn_name_dict)
+    gg = txt2generalgraph("Test7_switches/6100_FAS.txt")
 
     # -----------------------
     events = [("Bl", "8100O"), ("Bl", "8100E"), ("Hgv", "8100O"), ("Hgv", "8100E"), ("Asn", "500O"),("Asn", "700O"), ("Asn", "8100O"), ("Mp", "500E"), ("Mp", "700E"), ("Mp", "8100E")]
@@ -93,7 +93,7 @@ def main(calculate_background : bool):
     sample_changer = NN_samples(gg, fas_method, df)
     sample_changer.gg_to_nn_input(events) #
     sample_changer.findDelaysFromData()
-    sample_changer.NN_input_class_to_matrix("Test6_supergraph_V_A/nn_input.csv")
+    sample_changer.NN_input_class_to_matrix("Test7_switches/nn_input.csv")
     #-----------------------
         # data = sample_changer.filterPrimaryDelay()
         # data_collection.append(data)
@@ -128,7 +128,7 @@ def plots():
 
 
 def main_nn():
-    df = pd.read_csv('Test6_supergraph_V_A/nn_input.csv', sep = ";")
+    df = pd.read_csv('Test7_switches/nn_input.csv', sep = ";")
     #print(df)
     #df['prev_event'] = df['prev_event'].astype(float)
     print(len(df))
@@ -143,6 +143,6 @@ def main_nn():
     # add all columns except id and delay as input
     x = df[df.columns[~df.columns.isin(["id",'delay', "traveltime"])]].values.tolist()
     #print(x, y)
-    firstNN(x,y,"Test6_supergraph_V_A/nn_output")
+    firstNN(x,y,"Test7_switches/nn_output")
 
-main_nn()
+main(False)

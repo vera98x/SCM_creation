@@ -16,7 +16,8 @@ def dfToTrainRides(df : pd.DataFrame) -> np.array:
         for index_y, trainride in day_df.iterrows():
             i_y = index_y % data_len
             node = TrainRideNode(trainSerie = trainride['basic_treinnr_treinserie'], trainRideNumber = trainride['basic|treinnr'], stationName = trainride['basic|drp'], platformNumber = trainride['basic|spoor'],
-                                 activity = trainride['basic|drp_act'], delay = trainride['delay'],  plannedTime = trainride["basic|plan"], globalTime= trainride["global_plan"], buffer = trainride["buffer"], date = trainride["date"], traveltime = trainride["traveltime"])
+                                 activity = trainride['basic|drp_act'], delay = trainride['delay'],  plannedTime = trainride["basic|plan"], globalTime= trainride["global_plan"], buffer = trainride["buffer"], date = trainride["date"],
+                                 traveltime = trainride["traveltime"], wissels = trainride["wissels"], speed = trainride["speed"])
             dataset_with_classes_new[index_x, i_y] = node
     return dataset_with_classes_new
 
