@@ -70,7 +70,7 @@ class FAS_method():
         num_vars = len(nodes)
         for node in nodes:
             node_name = self.mapper_dict[node.get_name()]
-            trn_time = self.id_trn_dict[node_name].getPlannedTime()
+            trn_time = self.id_trn_dict[node_name].getPlannedTime_time()
             node.add_attribute('time', trn_time)
         edges = ggFas.get_graph_edges()
         # empty the complete graph

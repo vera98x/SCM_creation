@@ -14,8 +14,8 @@ import pandas as pd
 
 
 def main_test():
-    df, sched = retrieveDataframe("Test7_switches/df_test.csv", True, ["7400O"])
-    df.to_csv("Test7_switches/df_done_AV5.csv", index=False, sep=";")
+    df, sched = retrieveDataframe("Test8_wissels/df_test_night.csv", True, ["7400O"])
+    df.to_csv("Test8_wissels/df_done.csv", index=False, sep=";")
     trn_matrix = dfToTrainRides(df)
     # # translate the TrainRideNodes to delays
     delay_matrix = TRN_matrix_to_delay_matrix(trn_matrix)
@@ -25,7 +25,7 @@ def main_test():
     column_names = np.array(list(map(lambda x: x.getID(), sched_with_classes)))
 
     # create a background and its schedule (background for Pc or FCI, cg_sched for GES)
-    dk = DomainKnowledge(sched_with_classes, 'Test7_switches/sched.png', Graph_type.MINIMAL)
+    dk = DomainKnowledge(sched_with_classes, 'Test8_wissels/sched.png', Graph_type.SWITCHES)
     bk, cg_sched = dk.get_CG_and_superGraph()  # get_CG_and_background(smaller_dataset, 'Results/sched.png')
     #
     # # independence test methods for Pc or FCI
@@ -145,4 +145,4 @@ def main_nn():
     #print(x, y)
     firstNN(x,y,"Test7_switches/nn_output")
 
-main(False)
+main_test()

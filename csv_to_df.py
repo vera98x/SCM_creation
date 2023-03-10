@@ -3,6 +3,7 @@ import copy
 import numpy as np
 import pandas as pd
 from datetime import datetime
+import datetime as dt
 from typing import List, Tuple
 import math
 
@@ -81,6 +82,7 @@ def makeDataUniform(df : pd.DataFrame, sched : pd.DataFrame) ->  pd.DataFrame:
             add_extra_activities = add_extra_activities.assign(date=day_date)
             add_extra_activities = add_extra_activities.assign(time = add_extra_activities["basic|plan"].dt.time)
             add_extra_activities.loc[:, "basic|plan"] = pd.to_datetime(add_extra_activities.date.astype(str) + ' ' + add_extra_activities.time.astype(str))
+            df["basic|plan"] = df["basic|plan"].apply(lambda x: x + dt.timedelta(days=1) if x.hour <= 4 else x)
             add_extra_activities = add_extra_activities.drop(columns=["time"])
 
             # overlap the delays (if there are too many np.nan, the mv_fischer cannot handle it)
@@ -145,7 +147,7 @@ def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: L
     # split dataframes in column
     df = pd.read_csv(export_name, sep=";")
     df = df[
-        ["nvgb_verkeersdatum", 'basic_treinnr_treinserie','basic|treinnr', 'basic|spoor', 'basic|drp', 'basic|drp_act', 'basic|plan', 'basic|uitvoer', 'vklvos_plan_actueel']]
+        ["nvgb_verkeersdatum", 'basic_treinnr_treinserie','basic|treinnr', 'basic|spoor', 'basic|drp', 'basic|drp_act', 'basic|plan', 'basic|uitvoer', 'vklvos_plan_actueel', 'wissels']]
     # set types of columns
     df['basic_treinnr_treinserie'] = df['basic_treinnr_treinserie'].astype('string')
     df['basic|drp'] = df['basic|drp'].astype('string')
@@ -167,7 +169,7 @@ def retrieveDataframe(export_name : str, workdays : bool, list_of_trainseries: L
     # rename column
     df['date'] = df['nvgb_verkeersdatum']
     #todo replace this with real wissel data
-    df = df.assign(wissels = "MP$283$R,MP$281B$R,MP$281A$R,MP$271A$L,MP$269$L,MP$263A$R,MP$247$R,MP$243B$R,MP$241A$L")
+    #df = df.assign(wissels = "MP$283$R,MP$281B$R,MP$281A$R,MP$271A$L,MP$269$L,MP$263A$R,MP$247$R,MP$243B$R,MP$241A$L")
     df = df.assign(speed = 80)
 
     # only keep the desired train series
@@ -222,7 +224,14 @@ def findSched(df):
     print("duplicated actions", len(df_sched[df_sched.duplicated(['basic|treinnr', 'basic|drp', 'basic|drp_act'], keep=False)]))
     # add a old timestamp to it, to recognise the schedule entries
     timestamp = pd.to_datetime("01-01-2000", format='%d-%m-%Y')
+
     df_sched = df_sched.assign(date=timestamp)
+    # update the basic|plan of the schedule
+    df_sched = df_sched.assign(time=df_sched["basic|plan"].dt.time)
+    df_sched.loc[:, "basic|plan"] = pd.to_datetime(df_sched.date.astype(str) + ' ' + df_sched.time.astype(str))
+    df_sched["basic|plan"] = df_sched["basic|plan"].apply(lambda x: x + dt.timedelta(days=1) if x.hour <= 4 else x)
+    df_sched = df_sched.drop(columns=["time"])
+
     df_sched["delay"] = 0
     df_sched= df_sched.sort_values(by=['basic_treinnr_treinserie', "basic|treinnr", "basic|plan"]).reset_index(drop=True)
 

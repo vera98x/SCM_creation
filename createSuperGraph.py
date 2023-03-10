@@ -47,12 +47,13 @@ class DomainKnowledge:
     def addRequiredBasedStation(self, bk: BackgroundKnowledge) -> FastBackgroundKnowledge:
         buffer = 15  # minutes
         for station, station_list in self.station_dict.items():
+            # sort on planned time
             station_list.sort(key=lambda x: x[0])
             for station_index in range(len(station_list)):
                 (time_trn, trn) = station_list[station_index]
                 for station2_index in range(station_index+1, len(station_list)):
                     (other_time_trn, other_trn) = station_list[station2_index]
-                    if abs((other_time_trn.hour - time_trn.hour) * 60 + (other_time_trn.minute - time_trn.minute)) <= buffer:
+                    if (other_time_trn - time_trn).total_seconds() <= (buffer * 60):
                         if(self.graph_type == Graph_type.SUPER):
                             bk = addDependency(trn.getID(), other_trn.getID(), bk, self.trn_name_id_dict)
                         if (self.graph_type == Graph_type.SWITCHES):
